@@ -27,3 +27,17 @@ class CacheConfig:
     """Cache configuration settings"""
     ENABLE_CACHE = os.getenv("CACHE_ENABLED", "True").lower() == "true"
     CACHE_EXPIRY = int(os.getenv("CACHE_EXPIRY", 3600))
+
+
+class APIConfig:
+    """FastAPI server configuration settings"""
+    HOST = os.getenv("API_HOST", "0.0.0.0")
+    PORT = int(os.getenv("API_PORT", "8000"))
+    CORS_ORIGINS = [
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:3000,http://127.0.0.1:3000",
+        ).split(",")
+        if origin.strip()
+    ]

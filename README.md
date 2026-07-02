@@ -5,13 +5,14 @@ DHARMA is an innovative Retrieval-Augmented Generation (RAG) system that provide
 
 ## 🌟 Features
 
-- Hybrid search combining semantic and keyword-based approaches
-- Context-aware response generation
-- Real-time response streaming
-- Interactive verse exploration
-- Source verification and citation
-- Performance monitoring and evaluation metrics
-- User-friendly Streamlit interface
+- Hybrid search combining semantic (pgvector) and keyword-based (BM25) retrieval
+- Source-grounded response generation with verse citations
+- FastAPI REST API + Next.js frontend
+- Interactive verse and source cards
+- Full Markdown answer rendering
+- Offline evaluation pipeline with published metrics
+- Streamlit interface (legacy UI)
+- Docker-based PostgreSQL setup
 
 ## 📋 Prerequisites
 
@@ -83,6 +84,41 @@ streamlit run app.py --server.fileWatcherType none
 
 Open [http://localhost:8501](http://localhost:8501)
 
+### 6. (Optional) Run the REST API
+
+The FastAPI backend wraps the same RAG pipeline for frontend and API clients:
+
+```bash
+uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
+- ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+- Health: `GET /health` · Ready: `GET /ready` · Chat: `POST /api/v1/chat`
+
+Streamlit and the API can run at the same time; they share the same `.env` and database.
+
+### 7. Run the Next.js frontend
+
+```bash
+cd frontend
+npm install
+cp .env.local.example .env.local
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) — full-stack UI connected to the FastAPI backend.
+
+Set `NEXT_PUBLIC_API_URL=http://localhost:8000` in `frontend/.env.local`.
+
+---
+
+## 📸 Screenshots
+
+<!-- TODO: Add home page screenshot -->
+<!-- TODO: Add chat interface screenshot with verse card -->
+<!-- TODO: Add demo GIF of question → answer flow -->
+
 ---
 
 ## 🛠️ Installation (native PostgreSQL alternative)
@@ -126,23 +162,21 @@ This will generate:
 
 ```
 Dharma_RAG/
+├── api/                        # FastAPI REST layer (wraps RAG pipeline)
+├── frontend/                   # Next.js 15 application
 ├── app.py                      # Streamlit chatbot entry point
 ├── docker-compose.yml          # PostgreSQL + pgvector (recommended)
+├── docs/
+│   ├── ARCHITECTURE.md         # System architecture overview
+│   └── phases/                 # Engineering phase documentation
 ├── scripts/
 │   └── setup_database.py       # One-command DB setup + seeding
+├── tests/
+│   └── test_api.py
 ├── src/
 │   ├── config/
-│   │   ├── prompts.py          # Response templates
-│   │   └── settings.py         # Configuration
 │   ├── core/
-│   │   ├── generator.py        # Response generation
-│   │   ├── pipeline.py         # Main RAG pipeline
-│   │   ├── query_preprocessor.py
-│   │   ├── retriever.py        # Verse retrieval
-│   │   └── store_data.py       # Embedding + insert logic
 │   └── evaluation/
-│       ├── run_evaluation.py
-│       └── evaluator.py
 ├── data/                       # Source CSV datasets
 ├── requirements.txt
 └── README.md
@@ -171,12 +205,14 @@ The system returns responses in the following JSON format:
 
 ## 📊 Performance Metrics
 
-Current system performance:
-- Average Response Time: 1.17s
-- Semantic Similarity: 0.43
-- BLEU Score: 0.72
-- ROUGE-1: 0.76
-- Cache Hit Rate: 85%
+Offline evaluation metrics (see `/evaluation` page or `GET /api/v1/evaluation/summary`):
+
+- Semantic Similarity: ~0.43
+- ROUGE-1: ~0.07
+- Question Match: ~0.81
+- Evaluation samples: 10
+
+Run `PYTHONPATH=. python src/evaluation/run_evaluation.py` to regenerate metrics.
 
 ## 🤝 Contributing
 
