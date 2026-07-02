@@ -34,6 +34,8 @@ app.include_router(chat.router)
 app.include_router(corpus.router)
 app.include_router(evaluation.router)
 
+logger.info("DHARMA API routes registered")
+
 
 @app.get("/", include_in_schema=False)
 def root():

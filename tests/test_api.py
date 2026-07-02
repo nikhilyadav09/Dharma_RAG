@@ -38,7 +38,7 @@ def mock_pipeline():
 @pytest.fixture
 def client(mock_pipeline):
     with patch(
-        "api.dependencies.VedicWisdomPipeline", return_value=mock_pipeline
+        "src.core.pipeline.VedicWisdomPipeline", return_value=mock_pipeline
     ):
         from api.main import app
 
@@ -103,7 +103,7 @@ def test_get_pipeline_returns_503_when_init_fails():
 
     shutdown_pipeline()
     with patch(
-        "api.dependencies.VedicWisdomPipeline",
+        "src.core.pipeline.VedicWisdomPipeline",
         side_effect=RuntimeError("init failed"),
     ):
         from fastapi import HTTPException

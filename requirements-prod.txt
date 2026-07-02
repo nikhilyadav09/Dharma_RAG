@@ -18,7 +18,7 @@ nltk>=3.8.1
 rank-bm25>=0.2.2
 numpy>=1.24.3
 pandas>=2.0.3
-torch>=2.0.0
+# torch: installed in Dockerfile (CPU wheel) — avoids 2GB+ CUDA deps on Render
 tqdm>=4.66.1
 
 # Utilities

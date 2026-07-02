@@ -13,7 +13,6 @@ frontend/.next
 tests
 docs
 evaluation_results_*.csv
-evaluation_summary_*.json
 *.md
 !README.md
 app.py

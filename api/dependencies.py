@@ -1,15 +1,16 @@
 import logging
 import threading
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, status
 
-from src.core.pipeline import VedicWisdomPipeline
+if TYPE_CHECKING:
+    from src.core.pipeline import VedicWisdomPipeline
 
 logger = logging.getLogger(__name__)
 
-_pipeline: Optional[VedicWisdomPipeline] = None
+_pipeline: Optional["VedicWisdomPipeline"] = None
 _pipeline_error: Optional[str] = None
 _init_lock = threading.Lock()
 
@@ -26,6 +27,9 @@ def _lazy_initialize_pipeline() -> bool:
             return True
 
         try:
+            # Import deferred: uvicorn binds the port before loading torch/ML.
+            from src.core.pipeline import VedicWisdomPipeline
+
             logger.info("Lazy-initializing VedicWisdomPipeline...")
             _pipeline = VedicWisdomPipeline()
             _pipeline_error = None
@@ -58,7 +62,7 @@ def get_pipeline_error() -> Optional[str]:
     return _pipeline_error
 
 
-def get_pipeline() -> VedicWisdomPipeline:
+def get_pipeline() -> "VedicWisdomPipeline":
     """FastAPI dependency: lazy init, then return the singleton pipeline."""
     if not _lazy_initialize_pipeline():
         raise HTTPException(
@@ -74,5 +78,6 @@ PipelineDependency = Depends(get_pipeline)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """Application lifespan — pipeline is initialized lazily on first use."""
+    logger.info("DHARMA API startup complete (pipeline loads on first chat)")
     yield
     shutdown_pipeline()

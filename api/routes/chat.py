@@ -1,4 +1,5 @@
 import logging
+import time
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -6,7 +7,6 @@ from fastapi.responses import JSONResponse
 from api.dependencies import PipelineDependency
 from api.schemas.chat import ChatRequest, ChatResponse
 from api.services.response_mapper import map_pipeline_response
-from src.core.pipeline import VedicWisdomPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +24,8 @@ router = APIRouter(prefix="/api/v1", tags=["chat"])
 )
 async def chat(
     request: ChatRequest,
-    pipeline: VedicWisdomPipeline = PipelineDependency,
+    pipeline=PipelineDependency,
 ):
-    import time
-
     started = time.perf_counter()
     try:
         raw = await pipeline.process_query(request.query, session_id=request.session_id)
