@@ -30,7 +30,7 @@ async def chat(
 
     started = time.perf_counter()
     try:
-        raw = await pipeline.process_query(request.query)
+        raw = await pipeline.process_query(request.query, session_id=request.session_id)
     except Exception as exc:
         logger.exception("Chat request failed: %s", exc)
         raise HTTPException(

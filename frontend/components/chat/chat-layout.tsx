@@ -16,14 +16,32 @@ import {
 } from "@/lib/chat-messages";
 import type { ChatMessage } from "@/types";
 
+const SESSION_STORAGE_KEY = "dharma-chat-session-id";
+
+function getStoredSessionId(): string | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+  return sessionStorage.getItem(SESSION_STORAGE_KEY) ?? undefined;
+}
+
+function storeSessionId(sessionId: string): void {
+  sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+}
+
 export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initialQuerySent = useRef(false);
+
+  useEffect(() => {
+    setSessionId(getStoredSessionId());
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -64,7 +82,16 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
     setIsLoading(true);
 
     try {
-      const response = await getApiClient().sendChat(trimmed, controller.signal);
+      const response = await getApiClient().sendChat(
+        trimmed,
+        controller.signal,
+        sessionId,
+      );
+
+      if (response.session_id) {
+        setSessionId(response.session_id);
+        storeSessionId(response.session_id);
+      }
 
       if (response.type === "error") {
         setMessages((prev) => [
@@ -95,7 +122,7 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
       }
       inputRef.current?.focus();
     }
-  }, [isLoading]);
+  }, [isLoading, sessionId]);
 
   useEffect(() => {
     if (initialQuery && !initialQuerySent.current) {
@@ -121,6 +148,8 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
     setMessages([]);
     setIsLoading(false);
     setInput("");
+    setSessionId(undefined);
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
     inputRef.current?.focus();
   }, []);
 
@@ -136,7 +165,7 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
               Wisdom Chat
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Grounded answers from the Bhagavad Gita and Yoga Sutras
+              Intent-aware answers from the Bhagavad Gita and Yoga Sutras
             </p>
           </div>
           {hasMessages ? (

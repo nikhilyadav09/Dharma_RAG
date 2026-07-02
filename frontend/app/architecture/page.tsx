@@ -20,22 +20,22 @@ const layers = [
   {
     name: "Presentation — Next.js",
     detail:
-      "App Router frontend with TypeScript, Tailwind CSS, and a calm design system. Handles chat UI, markdown rendering, and API consumption.",
+      "App Router frontend with TypeScript, Tailwind CSS, Markdown rendering, related-question chips, and multi-turn session handling.",
   },
   {
     name: "API — FastAPI",
     detail:
-      "Thin REST layer exposing health, readiness, chat, corpus stats, and evaluation summary. No business logic duplication.",
+      "REST layer exposing health, readiness, chat (with session_id), corpus stats, and evaluation summary. Thin wrapper over the RAG pipeline.",
   },
   {
     name: "RAG Pipeline — Python",
     detail:
-      "VedicWisdomPipeline orchestrates query preprocessing, hybrid retrieval, and Groq-based generation with citation mapping.",
+      "VedicWisdomPipeline: query preprocessing, intent routing, metadata lookup, hybrid retrieval with reranking, conversation memory, and Groq generation.",
   },
   {
     name: "Data — PostgreSQL + pgvector",
     detail:
-      "867 verses with 384-dimensional embeddings (all-MiniLM-L6-v2). IVFFlat index for approximate nearest-neighbor search.",
+      "867 verses with 384-dimensional BGE embeddings (bge-small-en-v1.5). IVFFlat index for approximate nearest-neighbor search.",
   },
 ];
 
@@ -43,29 +43,31 @@ const flows = [
   {
     title: "Request & API flow",
     steps: [
-      "User submits question in Next.js /chat",
+      "User submits question in Next.js /chat (optional session_id for memory)",
       "POST /api/v1/chat with JSON body",
-      "FastAPI validates input and invokes pipeline",
-      "Response mapped to typed JSON schema",
-      "Frontend renders markdown, sources, and verse card",
+      "FastAPI validates input and invokes VedicWisdomPipeline",
+      "Response mapped to typed JSON (answer, sources, related_questions)",
+      "Frontend renders Markdown, related chips, sources, and verse card",
     ],
   },
   {
     title: "Retrieval flow",
     steps: [
-      "QueryPreprocessor normalizes and expands query",
-      "Semantic search via pgvector cosine similarity",
-      "BM25 keyword scoring on verse text",
-      "Hybrid fusion (0.7 semantic + 0.3 BM25)",
-      "Top-k verses passed to generator as context",
+      "QueryPreprocessor cleans query and detects scripture preference",
+      "MetadataRetriever resolves explicit chapter/verse references",
+      "Semantic search via pgvector (BGE embeddings, normalized)",
+      "BM25 keyword scoring on translation + explanation",
+      "Score-based hybrid fusion (0.65 semantic + 0.35 BM25)",
+      "Cross-encoder reranking and chapter deduplication",
+      "Top verses passed to generator (1 primary + 2 supporting)",
     ],
   },
   {
     title: "Embedding & database flow",
     steps: [
       "Verses loaded from CSV into PostgreSQL",
-      "sentence-transformers encodes each verse",
-      "384-dim vectors stored in pgvector column",
+      "BAAI/bge-small-en-v1.5 encodes translation + explanation",
+      "384-dim normalized vectors stored in pgvector column",
       "IVFFlat index built after bulk insert",
       "Retriever queries index at inference time",
     ],
@@ -73,11 +75,11 @@ const flows = [
   {
     title: "LLM generation flow",
     steps: [
-      "Retrieved verses formatted into prompt context",
-      "Groq llama-3.3-70b-versatile generates answer",
-      "Response template enforces citation style",
-      "Primary verse and sources extracted",
-      "Latency and model metadata attached",
+      "Intent router selects dynamic Markdown template",
+      "Conversation context injected for multi-turn queries",
+      "Groq llama-3.3-70b-versatile generates structured answer",
+      "Inline citations and related follow-up questions parsed",
+      "Primary verse, sources, and session_id returned",
     ],
   },
 ];
@@ -87,8 +89,9 @@ const stack = [
   "FastAPI",
   "PostgreSQL",
   "pgvector",
-  "sentence-transformers",
+  "BGE embeddings",
   "BM25",
+  "Cross-encoder",
   "Groq",
 ];
 
@@ -98,7 +101,7 @@ export default function ArchitecturePage() {
       <PageHeader
         eyebrow="System design"
         title="Architecture"
-        description="DHARMA separates presentation, API, and RAG core. Each layer has a single responsibility — enabling independent evolution of frontend and backend."
+        description="DHARMA separates presentation, API, and RAG core — with intent routing, metadata lookup, hybrid retrieval, and multi-turn memory."
       />
 
       <RequestFlowDiagram />
@@ -108,7 +111,7 @@ export default function ArchitecturePage() {
       <div className="space-y-6">
         <SectionHeading
           title="End-to-end request flow"
-          description="From browser click to cited wisdom response."
+          description="From browser click to cited, structured wisdom response."
         />
         <Card className="border-border/80">
           <CardContent className="p-6">

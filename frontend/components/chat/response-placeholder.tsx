@@ -5,23 +5,24 @@ import { useEffect, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 
-const LOADING_MESSAGES = [
-  "Searching Bhagavad Gita…",
-  "Searching Yoga Sutras…",
-  "Retrieving verses…",
-  "Generating response…",
-  "Almost ready…",
-];
+const LOADING_STAGES = [
+  "Searching scriptures…",
+  "Ranking verses…",
+  "Synthesizing wisdom…",
+  "Preparing response…",
+] as const;
 
-const ROTATION_MS = 1800;
+const STAGE_MS = 2200;
 
 export function ResponsePlaceholder() {
-  const [messageIndex, setMessageIndex] = useState(0);
+  const [stageIndex, setStageIndex] = useState(0);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
-    }, ROTATION_MS);
+      setStageIndex((prev) =>
+        prev < LOADING_STAGES.length - 1 ? prev + 1 : prev,
+      );
+    }, STAGE_MS);
 
     return () => window.clearInterval(interval);
   }, []);
@@ -40,11 +41,26 @@ export function ResponsePlaceholder() {
         <Sparkles className="h-4 w-4 animate-pulse text-accent" />
       </div>
       <div className="min-w-0 flex-1 space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden />
-          <span className="transition-opacity duration-300">
-            {LOADING_MESSAGES[messageIndex]}
-          </span>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden />
+            <span>{LOADING_STAGES[stageIndex]}</span>
+          </div>
+          <ol className="flex flex-wrap gap-2 text-[11px] text-muted-foreground/80" aria-hidden>
+            {LOADING_STAGES.map((stage, index) => (
+              <li
+                key={stage}
+                className={
+                  index <= stageIndex
+                    ? "text-accent"
+                    : "opacity-50"
+                }
+              >
+                {index < stageIndex ? "✓" : index === stageIndex ? "●" : "○"}{" "}
+                {stage.replace("…", "")}
+              </li>
+            ))}
+          </ol>
         </div>
         <div className="space-y-2.5">
           <Skeleton className="h-3 w-[90%]" />

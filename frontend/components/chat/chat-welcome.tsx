@@ -8,8 +8,8 @@ interface ChatWelcomeProps {
 
 const highlights = [
   "Grounded in Bhagavad Gita & Yoga Sutras",
-  "Every answer cites source verses",
-  "Calm, focused reading experience",
+  "Inline citations and structured Markdown answers",
+  "Multi-turn memory with related follow-up questions",
 ];
 
 export function ChatWelcome({ onSelectQuestion }: ChatWelcomeProps) {
@@ -22,8 +22,9 @@ export function ChatWelcome({ onSelectQuestion }: ChatWelcomeProps) {
         Welcome to Wisdom Chat
       </h2>
       <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
-        Ask about dharma, yoga, consciousness, or daily practice. DHARMA retrieves
-        relevant verses and synthesizes thoughtful, source-grounded guidance.
+        Ask about dharma, yoga, a specific verse, or daily practice. DHARMA routes
+        your question by intent, retrieves relevant scriptures, and synthesizes
+        thoughtful, cited guidance.
       </p>
       <ul className="mt-6 flex flex-col gap-2 text-left text-sm text-muted-foreground sm:items-center">
         {highlights.map((item) => (

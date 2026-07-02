@@ -2,7 +2,7 @@ export const siteConfig = {
   name: "DHARMA",
   title: "DHARMA — Ancient Wisdom, Modern Retrieval",
   description:
-    "A production-quality RAG application for spiritual and philosophical guidance from the Bhagavad Gita and Patanjali Yoga Sutras.",
+    "A production-quality RAG knowledge assistant for spiritual and philosophical guidance from the Bhagavad Gita and Patanjali Yoga Sutras — with intent-aware answers, hybrid retrieval, and multi-turn memory.",
   url: "https://dharma-rag.example.com",
   ogImage: "/og.png",
   links: {

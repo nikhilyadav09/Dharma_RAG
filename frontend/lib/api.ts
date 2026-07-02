@@ -209,6 +209,7 @@ async function request<T>(
 async function requestChat(
   query: string,
   signal?: AbortSignal,
+  sessionId?: string,
 ): Promise<ChatResponse> {
   const timeoutController = new AbortController();
   const timeoutId = setTimeout(
@@ -223,7 +224,10 @@ async function requestChat(
     const response = await fetch(`${getBaseUrl()}/api/v1/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({
+        query,
+        ...(sessionId ? { session_id: sessionId } : {}),
+      }),
       signal: combinedSignal,
     });
 
@@ -278,7 +282,11 @@ async function requestChat(
 }
 
 export interface ApiClient {
-  sendChat: (query: string, signal?: AbortSignal) => Promise<ChatResponse>;
+  sendChat: (
+    query: string,
+    signal?: AbortSignal,
+    sessionId?: string,
+  ) => Promise<ChatResponse>;
   getCorpusStats: (signal?: AbortSignal) => Promise<CorpusStats>;
   getEvaluationSummary: (signal?: AbortSignal) => Promise<EvaluationSummary>;
 }
@@ -288,7 +296,8 @@ let apiClient: ApiClient | null = null;
 export function getApiClient(): ApiClient {
   if (!apiClient) {
     apiClient = {
-      sendChat: requestChat,
+      sendChat: (query, signal, sessionId) =>
+        requestChat(query, signal, sessionId),
       getCorpusStats: (signal) =>
         request("/api/v1/corpus/stats", {
           signal,

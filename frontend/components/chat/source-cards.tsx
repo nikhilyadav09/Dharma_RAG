@@ -6,8 +6,10 @@ import { useState } from "react";
 import { CollapsibleSection } from "@/components/common/collapsible-section";
 import { Badge } from "@/components/ui/badge";
 import {
-  formatRelevancePercent,
-  formatRelevanceLabel,
+  detectScriptureBook,
+  formatBookBadge,
+  formatCitationLabel,
+  getCitationRole,
 } from "@/lib/format-relevance";
 import { parseSourceRef, verseRefKey } from "@/lib/parse-source";
 import type { VerseDetail } from "@/types";
@@ -18,6 +20,17 @@ interface SourceCardsProps {
   primaryVerse?: VerseDetail;
 }
 
+function bookBadgeClass(book: string): string {
+  const scripture = detectScriptureBook(book);
+  if (scripture === "Bhagavad Gita") {
+    return "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200";
+  }
+  if (scripture === "Yoga Sutras") {
+    return "border-violet-500/30 bg-violet-500/10 text-violet-800 dark:text-violet-200";
+  }
+  return "";
+}
+
 export function SourceCards({ sources = [], primaryVerse }: SourceCardsProps) {
   const [expandedRaw, setExpandedRaw] = useState<string | null>(null);
 
@@ -26,7 +39,6 @@ export function SourceCards({ sources = [], primaryVerse }: SourceCardsProps) {
   }
 
   const primaryKey = primaryVerse ? verseRefKey(primaryVerse) : null;
-  const primaryConfidence = formatRelevancePercent(primaryVerse?.confidence_score);
   const parsed = sources.map(parseSourceRef);
 
   const toggleSource = (raw: string) => {
@@ -36,17 +48,17 @@ export function SourceCards({ sources = [], primaryVerse }: SourceCardsProps) {
   return (
     <CollapsibleSection title="Sources" count={sources.length} defaultOpen={false}>
       <ul className="space-y-1" aria-label="Source citations">
-        {parsed.map((source) => {
+        {parsed.map((source, index) => {
           const isPrimary =
             primaryKey != null &&
             source.chapter != null &&
             source.verse != null &&
             `${source.book} ${source.chapter}.${source.verse}` === primaryKey;
           const isExpanded = expandedRaw === source.raw;
-          const relevanceLabel =
-            isPrimary && primaryConfidence != null
-              ? formatRelevanceLabel(primaryVerse?.confidence_score)
-              : null;
+          const citationLabel = formatCitationLabel(
+            getCitationRole(index, isPrimary),
+          );
+          const bookLabel = formatBookBadge(source.book);
 
           return (
             <li key={source.raw}>
@@ -67,11 +79,17 @@ export function SourceCards({ sources = [], primaryVerse }: SourceCardsProps) {
                   aria-hidden
                 />
                 <span className="min-w-0 flex-1 font-medium">{source.raw}</span>
-                {relevanceLabel ? (
-                  <Badge variant="source" className="shrink-0 text-[10px]">
-                    {relevanceLabel}
+                <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                  <Badge
+                    variant="outline"
+                    className={cn("text-[10px]", bookBadgeClass(source.book))}
+                  >
+                    {bookLabel}
                   </Badge>
-                ) : null}
+                  <Badge variant="source" className="text-[10px]">
+                    {citationLabel}
+                  </Badge>
+                </div>
               </button>
               <div
                 className={cn(

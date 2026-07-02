@@ -15,6 +15,7 @@ export interface QueryInfo {
 export interface AnswerContent {
   summary: string;
   sources: string[];
+  related_questions?: string[];
 }
 
 export interface VerseDetail {
@@ -40,6 +41,7 @@ export interface ChatResponse {
   primary_verse?: VerseDetail;
   error?: string;
   metadata?: ResponseMetadata;
+  session_id?: string;
 }
 
 export interface ChatRequest {
@@ -74,6 +76,7 @@ export interface ChatMessage {
   type?: ResponseType;
   verse?: VerseDetail;
   sources?: string[];
+  relatedQuestions?: string[];
   metadata?: ResponseMetadata;
   explanation?: string;
   status?: ChatMessageStatus;

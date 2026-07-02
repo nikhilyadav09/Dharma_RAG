@@ -3,7 +3,7 @@
 import { Compass, Heart, Lightbulb, Scale, Sparkles, Sun } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-const suggestions: {
+const DEFAULT_SUGGESTIONS: {
   title: string;
   question: string;
   icon: LucideIcon;
@@ -41,23 +41,51 @@ const suggestions: {
 ];
 
 interface SuggestedQuestionsProps {
+  questions?: string[];
   onSelect?: (question: string) => void;
   disabled?: boolean;
   compact?: boolean;
+  hideHeading?: boolean;
 }
 
 export function SuggestedQuestions({
+  questions,
   onSelect,
   disabled = false,
   compact = false,
+  hideHeading = false,
 }: SuggestedQuestionsProps) {
-  const visible = compact ? suggestions.slice(0, 4) : suggestions;
+  if (questions && questions.length > 0) {
+    return (
+      <div className="flex flex-wrap gap-2" role="list" aria-label="Question suggestions">
+        {questions.map((question) => (
+          <button
+            key={question}
+            type="button"
+            role="listitem"
+            disabled={disabled}
+            onClick={() => onSelect?.(question)}
+            className="rounded-full border border-border bg-card px-3.5 py-2 text-left text-sm leading-snug transition-colors hover:border-accent/40 hover:bg-accent-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            aria-label={`Ask: ${question}`}
+          >
+            {question}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  const visible = compact
+    ? DEFAULT_SUGGESTIONS.slice(0, 4)
+    : DEFAULT_SUGGESTIONS;
 
   return (
     <div className="space-y-3" aria-label="Suggested questions">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Try asking
-      </p>
+      {!hideHeading ? (
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Try asking
+        </p>
+      ) : null}
       <div className="grid gap-2 sm:grid-cols-2">
         {visible.map((item) => (
           <button
@@ -79,5 +107,25 @@ export function SuggestedQuestions({
         ))}
       </div>
     </div>
+  );
+}
+
+/** Simple chip list for related follow-ups */
+export function QuestionChips({
+  questions,
+  onSelect,
+  disabled = false,
+}: {
+  questions: string[];
+  onSelect?: (question: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <SuggestedQuestions
+      questions={questions}
+      onSelect={onSelect}
+      disabled={disabled}
+      hideHeading
+    />
   );
 }

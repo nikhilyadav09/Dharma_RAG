@@ -19,6 +19,7 @@ export function createAssistantMessage(response: ChatResponse): ChatMessage {
     type: response.type,
     verse: response.primary_verse,
     sources: response.answer?.sources ?? [],
+    relatedQuestions: response.answer?.related_questions ?? [],
     metadata: response.metadata,
     explanation: response.primary_verse?.explanation,
     status: "complete",

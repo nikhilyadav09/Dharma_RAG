@@ -26,21 +26,21 @@ import { Card, CardContent } from "@/components/ui/card";
 const features = [
   {
     icon: Brain,
-    title: "Hybrid retrieval",
+    title: "Advanced retrieval",
     description:
-      "Semantic pgvector search combined with BM25 keyword ranking for precise verse matching.",
+      "BGE embeddings, BM25 keyword search, cross-encoder reranking, and metadata-aware verse lookup.",
   },
   {
     icon: BookOpen,
     title: "Source-grounded answers",
     description:
-      "Every response cites specific verses from the Bhagavad Gita and Patanjali Yoga Sutras.",
+      "Structured Markdown with inline citations, scripture badges, and collapsible verse cards.",
   },
   {
     icon: Database,
     title: "Production architecture",
     description:
-      "FastAPI backend, PostgreSQL with pgvector, Groq LLM, and a modern Next.js frontend.",
+      "Intent-aware prompts, multi-turn memory, related questions, FastAPI, and Next.js.",
   },
 ];
 
@@ -49,19 +49,19 @@ const steps = [
     icon: Layers,
     step: "01",
     title: "Ask with intention",
-    description: "Pose a question about dharma, yoga, consciousness, or daily practice.",
+    description: "Pose a question about dharma, yoga, a specific verse, or daily practice.",
   },
   {
     icon: Database,
     step: "02",
     title: "Retrieve relevant verses",
-    description: "Hybrid search surfaces the most aligned passages from the sacred corpus.",
+    description: "Metadata lookup, hybrid search, and reranking surface the best passages.",
   },
   {
     icon: Sparkles,
     step: "03",
     title: "Receive grounded guidance",
-    description: "An LLM synthesizes a clear answer with citations you can explore.",
+    description: "An intent-aware LLM synthesizes a clear answer with follow-up questions.",
   },
 ];
 
@@ -90,8 +90,8 @@ export default function HomePage() {
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
                 DHARMA helps you explore philosophical guidance from the Bhagavad
-                Gita and Yoga Sutras — with calm design, cited sources, and
-                production-grade engineering.
+                Gita and Yoga Sutras — with intent-aware answers, inline citations,
+                multi-turn memory, and production-grade engineering.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link href="/chat">
@@ -124,7 +124,7 @@ export default function HomePage() {
           <Container className="space-y-10">
             <SectionHeading
               title="Built for clarity and trust"
-              description="A retrieval-augmented experience designed to feel calm, credible, and easy to read."
+              description="A retrieval-augmented experience with dynamic templates, cited sources, and follow-up discovery."
               className="mx-auto max-w-2xl text-center"
             />
             <div className="grid gap-5 md:grid-cols-3">
@@ -154,7 +154,7 @@ export default function HomePage() {
           <Container className="space-y-10">
             <SectionHeading
               title="How it works"
-              description="Three calm steps from question to cited guidance."
+              description="Three steps from question to cited, structured guidance."
               className="mx-auto max-w-xl text-center"
             />
             <ol className="grid gap-6 md:grid-cols-3">
@@ -193,8 +193,8 @@ export default function HomePage() {
                 Begin your inquiry
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground md:text-base">
-                Explore timeless teachings with a interface designed for focus,
-                reading comfort, and source transparency.
+                Explore timeless teachings with structured answers, related questions,
+                and transparent scripture sources.
               </p>
               <Link href="/chat" className="mt-8 inline-block">
                 <Button size="lg">

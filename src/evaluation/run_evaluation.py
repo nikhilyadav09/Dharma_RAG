@@ -25,7 +25,7 @@ async def run_evaluation(test_queries: List[str], model_name: str):
             test_case = {
                 'query': query,
                 'generated_response': response['response']['summary'],
-                'reference_verse': response['verse']
+                'sources': response['response'].get('sources', []),
             }
             test_cases.append(test_case)
             

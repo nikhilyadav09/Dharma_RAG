@@ -1,0 +1,19 @@
+{
+  "queries": 5,
+  "results": [
+    {
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "embedding_dim": 384,
+      "encode_corpus_ms": 49922.3,
+      "top5_scripture_hit_rate": 1.0,
+      "mrr_at_5": 1.0
+    },
+    {
+      "model": "BAAI/bge-small-en-v1.5",
+      "embedding_dim": 384,
+      "encode_corpus_ms": 97960.9,
+      "top5_scripture_hit_rate": 1.0,
+      "mrr_at_5": 0.867
+    }
+  ]
+}

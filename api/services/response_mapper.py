@@ -65,6 +65,7 @@ def map_pipeline_response(
     response_body = raw.get("response") or {}
     summary = response_body.get("summary", "")
     sources = response_body.get("sources") or []
+    related_questions = response_body.get("related_questions") or []
 
     if response_type == "error":
         return (
@@ -77,7 +78,11 @@ def map_pipeline_response(
         )
 
     query_info = _build_query_info(raw, request_query)
-    answer = AnswerContent(summary=summary, sources=sources)
+    answer = AnswerContent(
+        summary=summary,
+        sources=sources,
+        related_questions=related_questions,
+    )
     primary_verse = _map_verse(raw.get("verse"))
 
     return (
@@ -87,6 +92,7 @@ def map_pipeline_response(
             answer=answer,
             primary_verse=primary_verse,
             metadata=metadata,
+            session_id=raw.get("session_id"),
         ),
         200,
     )

@@ -188,11 +188,16 @@ export function EvaluationContent() {
           <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
             <p>
               Metrics are computed via src/evaluation/run_evaluation.py using BLEU,
-              ROUGE, and semantic similarity against reference translations.
+              ROUGE, semantic similarity, markdown structure, readability, citation
+              overlap, groundedness proxy, answer length, and verse diversity scores.
             </p>
             <p>
               Low BLEU scores are expected for generative paraphrase — semantic
-              similarity and question matching are more informative for this use case.
+              similarity, structure, and citation metrics are more informative for this use case.
+            </p>
+            <p>
+              Retrieval uses BAAI/bge-small-en-v1.5 embeddings with hybrid BM25 fusion
+              and cross-encoder reranking over 867 indexed verses.
             </p>
           </CardContent>
         </Card>
@@ -207,7 +212,7 @@ export function EvaluationContent() {
             <p>Small evaluation sample ({data.num_samples} queries).</p>
             <p>Offline metrics — not live user feedback or A/B testing.</p>
             <p>Reference answers may not capture acceptable paraphrase variation.</p>
-            <p>No multilingual or adversarial query coverage in this benchmark.</p>
+            <p>API summary shows core metrics; extended quality scores are in evaluation JSON files.</p>
           </CardContent>
         </Card>
 
@@ -217,9 +222,10 @@ export function EvaluationContent() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm leading-relaxed text-muted-foreground">
             <p>Expand evaluation set with domain-expert reviewed answers.</p>
-            <p>Add faithfulness and citation-accuracy metrics.</p>
-            <p>Track latency and retrieval hit-rate in production.</p>
+            <p>Expose Phase 8/9 quality metrics (structure, groundedness) via API.</p>
+            <p>LLM-as-judge faithfulness scoring in production.</p>
             <p>Human preference evaluation for answer quality and tone.</p>
+            <p>Verse-level precision@k benchmark with gold Q→verse pairs.</p>
           </CardContent>
         </Card>
       </div>

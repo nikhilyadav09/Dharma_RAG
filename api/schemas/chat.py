@@ -16,6 +16,7 @@ class QueryInfo(BaseModel):
 class AnswerContent(BaseModel):
     summary: str
     sources: list[str] = Field(default_factory=list)
+    related_questions: list[str] = Field(default_factory=list)
 
 
 class VerseDetail(BaseModel):
@@ -50,3 +51,4 @@ class ChatResponse(BaseModel):
     primary_verse: Optional[VerseDetail] = None
     error: Optional[str] = None
     metadata: Optional[ResponseMetadata] = None
+    session_id: Optional[str] = None

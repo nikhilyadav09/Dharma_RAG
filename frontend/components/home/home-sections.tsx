@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 
 const examples = [
   "What does the Gita teach about finding peace amid daily responsibilities?",
+  "What is Chapter 2 Verse 47 about?",
   "How can I understand my dharma when facing difficult choices?",
-  "What do the Yoga Sutras say about understanding the true self?",
-  "How do I perform my duties without attachment to outcomes?",
+  "What do the Yoga Sutras say about meditation?",
 ];
 
 export function HomeExampleQuestions() {
@@ -21,7 +21,7 @@ export function HomeExampleQuestions() {
       <Container className="space-y-8">
         <SectionHeading
           title="Example questions"
-          description="Start with a thoughtful inquiry — each answer is grounded in retrieved verses."
+          description="Start with a thoughtful inquiry — each answer is grounded in retrieved verses with related follow-ups."
           className="mx-auto max-w-xl text-center"
         />
         <ul className="mx-auto grid max-w-2xl gap-2 sm:grid-cols-2">
@@ -55,8 +55,8 @@ const stack = [
   "FastAPI",
   "PostgreSQL",
   "pgvector",
-  "sentence-transformers",
-  "BM25",
+  "BGE embeddings",
+  "BM25 + reranker",
   "Groq LLM",
 ];
 
@@ -69,17 +69,18 @@ export function HomeAboutSections() {
             <h2 className="text-lg font-semibold">What is DHARMA?</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               DHARMA (Divine Healing And Reflective Mindfulness Assistant) is a
-              full-stack RAG application that helps you explore philosophical
+              production-quality RAG application that helps you explore philosophical
               questions through verses from the Bhagavad Gita and Patanjali Yoga
-              Sutras — with cited sources and calm, readable answers.
+              Sutras — with intent-aware answers, inline citations, and multi-turn memory.
             </p>
           </div>
           <div className="rounded-xl border border-border bg-card p-6">
             <h2 className="text-lg font-semibold">How RAG works here</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Retrieval-Augmented Generation combines search with language models.
-              Your question retrieves the most relevant verses via hybrid search;
-              an LLM then synthesizes a grounded answer using only that context.
+              Your question is routed by intent, verses are retrieved via metadata lookup
+              or hybrid search with reranking, and an LLM synthesizes a structured answer
+              with inline citations and follow-up questions.
             </p>
           </div>
           <div className="rounded-xl border border-border bg-card p-6">
@@ -98,7 +99,7 @@ export function HomeAboutSections() {
         <Container className="space-y-8">
           <SectionHeading
             title="Technology stack"
-            description="Production patterns across frontend, API, retrieval, and generation."
+            description="Production patterns across frontend, API, retrieval, reranking, and generation."
             className="mx-auto max-w-xl text-center"
           />
           <div className="flex flex-wrap justify-center gap-2">

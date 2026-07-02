@@ -4,6 +4,7 @@ const flowSteps = [
   "User",
   "Next.js",
   "FastAPI",
+  "Intent + Metadata",
   "Hybrid Retrieval",
   "Groq LLM",
   "Response",
@@ -19,7 +20,7 @@ export function RequestFlowDiagram() {
         <div
           className="mx-auto flex max-w-xs flex-col items-center gap-1"
           role="img"
-          aria-label="Request flow from User through Next.js, FastAPI, Hybrid Retrieval, Groq LLM to Response"
+          aria-label="Request flow from User through Next.js, FastAPI, Intent routing, Hybrid Retrieval, Groq LLM to Response"
         >
           {flowSteps.map((step, index) => (
             <div key={step} className="flex w-full flex-col items-center">
@@ -43,9 +44,9 @@ export function RequestFlowDiagram() {
 }
 
 const layers = [
-  { label: "Browser", sub: "Next.js · React · Tailwind" },
+  { label: "Browser", sub: "Next.js · Markdown · Sessions" },
   { label: "API", sub: "FastAPI · Pydantic" },
-  { label: "Pipeline", sub: "Retriever · Generator" },
+  { label: "Pipeline", sub: "Intent · Retriever · Memory" },
   { label: "Database", sub: "PostgreSQL · pgvector" },
 ];
 

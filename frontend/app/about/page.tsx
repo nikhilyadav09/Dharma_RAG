@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const sections = [
   {
     title: "What is DHARMA?",
-    body: "DHARMA (Divine Healing And Reflective Mindfulness Assistant) is an educational RAG system that helps users explore philosophical questions using verses from the Bhagavad Gita and Patanjali Yoga Sutras.",
+    body: "DHARMA (Divine Healing And Reflective Mindfulness Assistant) is a production-quality RAG system that helps users explore philosophical questions using verses from the Bhagavad Gita and Patanjali Yoga Sutras — with intent-aware answers, inline citations, and multi-turn conversation memory.",
   },
   {
     title: "What it is not",
@@ -20,11 +20,15 @@ const sections = [
   },
   {
     title: "Corpus",
-    body: "The knowledge base includes processed verse translations and explanations embedded with sentence-transformers and stored in PostgreSQL with pgvector.",
+    body: "The knowledge base includes 867 verses (700 Bhagavad Gita + 167 Yoga Sutras) with translation and explanation text embedded using BAAI/bge-small-en-v1.5 and stored in PostgreSQL with pgvector.",
   },
   {
     title: "How answers are generated",
-    body: "Your question is preprocessed, relevant verses are retrieved via hybrid search, and a Groq LLM synthesizes a grounded response with citations.",
+    body: "Your question is preprocessed and routed by intent. Metadata lookup resolves explicit chapter/verse references; otherwise hybrid retrieval (pgvector + BM25 + cross-encoder reranking) finds relevant passages. Groq LLM synthesizes a structured Markdown answer with inline citations, related follow-up questions, and scripture source cards.",
+  },
+  {
+    title: "Conversation memory",
+    body: "Multi-turn sessions remember recent context so follow-up questions like “explain more” or “what did he teach?” build on prior answers without starting over.",
   },
 ];
 
@@ -34,7 +38,7 @@ export default function AboutPage() {
       <PageHeader
         eyebrow="About"
         title="About DHARMA"
-        description="A full-stack AI application demonstrating RAG engineering over ancient wisdom texts."
+        description="A full-stack AI knowledge assistant demonstrating production RAG engineering over ancient wisdom texts."
       />
 
       <div className="space-y-4">

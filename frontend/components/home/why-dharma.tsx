@@ -5,6 +5,7 @@ import {
   Brain,
   GitBranch,
   Layers,
+  MessageCircle,
   Rocket,
   Shield,
 } from "lucide-react";
@@ -23,32 +24,37 @@ const whyFeatures: {
   {
     icon: Shield,
     title: "Grounded responses",
-    description: "Answers synthesized only from retrieved scripture — not open-ended speculation.",
+    description: "Answers synthesized only from retrieved scripture — with inline citations, not speculation.",
   },
   {
     icon: BookOpen,
     title: "Real citations",
-    description: "Every wisdom response links to specific Bhagavad Gita and Yoga Sutras verses.",
+    description: "Primary and supporting teachings from Bhagavad Gita and Yoga Sutras with scripture badges.",
   },
   {
     icon: Brain,
-    title: "Hybrid retrieval",
-    description: "Semantic pgvector search combined with BM25 for precise verse matching.",
+    title: "Advanced retrieval",
+    description: "BGE embeddings, BM25, cross-encoder reranking, and direct chapter/verse lookup.",
+  },
+  {
+    icon: MessageCircle,
+    title: "AI teacher flow",
+    description: "Multi-turn memory and related follow-up questions guide deeper exploration.",
   },
   {
     icon: Layers,
-    title: "Modern AI stack",
-    description: "Groq LLM with a production FastAPI backend and Next.js frontend.",
+    title: "Intent-aware answers",
+    description: "Dynamic templates adapt to meaning, practice, comparison, and philosophical questions.",
+  },
+  {
+    icon: Rocket,
+    title: "Production ready",
+    description: "Docker, typed APIs, expanded evaluation metrics, and a polished product UI.",
   },
   {
     icon: GitBranch,
     title: "Open source",
     description: "Full codebase available for review, learning, and contribution.",
-  },
-  {
-    icon: Rocket,
-    title: "Production ready",
-    description: "Docker, typed APIs, evaluation metrics, and a polished product UI.",
   },
 ];
 
@@ -58,7 +64,7 @@ export function WhyDharma() {
       <Container className="space-y-8">
         <SectionHeading
           title="Why DHARMA?"
-          description="A calm, credible way to explore ancient wisdom — built with modern engineering."
+          description="Ancient wisdom explored through modern AI engineering — grounded, structured, and conversational."
           className="mx-auto max-w-xl text-center"
         />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

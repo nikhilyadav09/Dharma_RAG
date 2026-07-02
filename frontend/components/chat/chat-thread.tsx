@@ -33,6 +33,7 @@ export function ChatThread({
             key={message.id}
             message={message}
             onRetry={onRetry}
+            onSelectQuestion={onSelectQuestion}
           />
         ),
       )}

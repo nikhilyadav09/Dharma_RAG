@@ -15,7 +15,7 @@ export default function EvaluationPage() {
       <PageHeader
         eyebrow="Quality metrics"
         title="Evaluation"
-        description="Offline metrics from the Python evaluation pipeline, loaded live from the API when available."
+        description="Offline retrieval and answer-quality metrics from the Python evaluation pipeline, loaded live from the API when available."
       />
 
       <EvaluationContent />

@@ -7,6 +7,7 @@ import {
 import { CopyButton } from "@/components/common/copy-button";
 import { MarkdownContent } from "@/components/common/markdown-content";
 import { ErrorState } from "@/components/common/error-state";
+import { RelatedQuestions } from "@/components/chat/related-questions";
 import { ResponseMetadata } from "@/components/chat/response-metadata";
 import { SourceCards } from "@/components/chat/source-cards";
 import { VerseCardPlaceholder } from "@/components/chat/verse-card-placeholder";
@@ -15,9 +16,14 @@ import type { ChatMessage } from "@/types";
 interface AssistantMessageProps {
   message: ChatMessage;
   onRetry?: (query: string) => void;
+  onSelectQuestion?: (question: string) => void;
 }
 
-export function AssistantMessage({ message, onRetry }: AssistantMessageProps) {
+export function AssistantMessage({
+  message,
+  onRetry,
+  onSelectQuestion,
+}: AssistantMessageProps) {
   if (message.status === "error") {
     return (
       <article className="space-y-4" aria-label="Assistant error">
@@ -41,6 +47,8 @@ export function AssistantMessage({ message, onRetry }: AssistantMessageProps) {
   const showExplanation =
     message.explanation &&
     message.explanation.trim() !== message.verse?.translation?.trim();
+  const showRelated =
+    (message.relatedQuestions?.length ?? 0) > 0 && onSelectQuestion;
 
   return (
     <article className="space-y-4" aria-label="Assistant response">
@@ -63,6 +71,13 @@ export function AssistantMessage({ message, onRetry }: AssistantMessageProps) {
             metadata={message.metadata}
             sourcesCount={message.sources?.length ?? 0}
           />
+
+          {showRelated ? (
+            <RelatedQuestions
+              questions={message.relatedQuestions!}
+              onSelect={onSelectQuestion}
+            />
+          ) : null}
 
           {showExplanation ? (
             <CollapsibleSection title="Reasoning from scripture" defaultOpen={false}>

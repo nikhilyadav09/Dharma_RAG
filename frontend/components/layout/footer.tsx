@@ -33,6 +33,7 @@ const techStack = [
   "FastAPI",
   "PostgreSQL",
   "pgvector",
+  "BGE",
   "Groq",
   "Docker",
 ];
@@ -53,8 +54,9 @@ export function Footer() {
               <span className="font-semibold tracking-tight">DHARMA</span>
             </div>
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Divine Healing And Reflective Mindfulness Assistant — a full-stack RAG
-              application for exploring timeless Sanskrit wisdom with cited sources.
+              Divine Healing And Reflective Mindfulness Assistant — a production-quality
+              RAG application for exploring Sanskrit wisdom with intent-aware answers,
+              inline citations, and multi-turn conversation.
             </p>
             <p className="text-xs leading-relaxed text-muted-foreground">
               Built with ❤️ by{" "}

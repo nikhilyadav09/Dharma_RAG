@@ -8,7 +8,8 @@ from sentence_transformers import SentenceTransformer
 import torch
 from tqdm import tqdm
 
-from src.config.settings import DatabaseConfig
+from src.config.settings import DatabaseConfig, RAGConfig
+from src.utils.scripture import build_index_text
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -16,11 +17,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
 
 def generate_embeddings(texts: list[str], batch_size: int = 32) -> list[list[float]]:
-    """Generate embeddings for given texts using sentence-transformers with batching"""
+    """Generate normalized embeddings using the configured model."""
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        logging.info(f"Using device: {device}")
-        model = SentenceTransformer('all-MiniLM-L6-v2').to(device)
+        logging.info("Using device: %s, model: %s", device, RAGConfig.EMBEDDING_MODEL)
+        model = SentenceTransformer(RAGConfig.EMBEDDING_MODEL).to(device)
 
         if isinstance(texts, str):
             texts = [texts]
@@ -29,18 +30,27 @@ def generate_embeddings(texts: list[str], batch_size: int = 32) -> list[list[flo
         for i in tqdm(range(0, len(texts), batch_size), desc="Generating embeddings"):
             batch = texts[i:i + batch_size]
             try:
-                batch_embeddings = model.encode(batch, device=device)
+                batch_embeddings = model.encode(
+                    batch,
+                    device=device,
+                    normalize_embeddings=True,
+                    show_progress_bar=False,
+                )
                 embeddings.extend(batch_embeddings.tolist())
             except RuntimeError as e:
                 if "out of memory" in str(e):
                     logging.warning("CUDA out of memory, falling back to CPU")
                     torch.cuda.empty_cache()
                     model = model.to("cpu")
-                    batch_embeddings = model.encode(batch)
+                    batch_embeddings = model.encode(
+                        batch,
+                        normalize_embeddings=True,
+                        show_progress_bar=False,
+                    )
                     embeddings.extend(batch_embeddings.tolist())
                 else:
                     raise e
-        
+
         return embeddings[0] if len(embeddings) == 1 else embeddings
 
     except Exception as e:
@@ -60,10 +70,18 @@ def verify_data_files() -> tuple[pd.DataFrame, pd.DataFrame]:
         yoga_df['book'] = 'Yoga Sutras'
 
         logging.info("Generating embeddings for Bhagavad Gita...")
-        gita_df['embedding'] = generate_embeddings(gita_df['explanation'].tolist())
+        gita_texts = [
+            build_index_text(t, e, RAGConfig.MAX_PASSAGE_CHARS)
+            for t, e in zip(gita_df["translation"], gita_df["explanation"])
+        ]
+        gita_df["embedding"] = generate_embeddings(gita_texts)
 
         logging.info("Generating embeddings for Yoga Sutras...")
-        yoga_df['embedding'] = generate_embeddings(yoga_df['explanation'].tolist())
+        yoga_texts = [
+            build_index_text(t, e, RAGConfig.MAX_PASSAGE_CHARS)
+            for t, e in zip(yoga_df["translation"], yoga_df["explanation"])
+        ]
+        yoga_df["embedding"] = generate_embeddings(yoga_texts)
 
         required_columns = ['book', 'chapter', 'verse', 'sanskrit', 'translation', 'explanation']
         for df, name in [(gita_df, 'Gita'), (yoga_df, 'Yoga Sutras')]:
@@ -101,9 +119,9 @@ def setup_database():
             sanskrit TEXT,
             translation TEXT,
             explanation TEXT,
-            embedding vector(384)
+            embedding vector(%s)
         );
-        """)
+        """ % RAGConfig.EMBEDDING_DIM)
 
         conn.commit()
         return conn, cur

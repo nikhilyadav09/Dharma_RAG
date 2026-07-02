@@ -1,247 +1,324 @@
-from typing import List, Dict, Optional
-import logging
-from groq import AsyncGroq
-from src.config.settings import LLMConfig
-from src.config.prompts import PromptTemplates
-from src.utils.query_classifier import classify_query
-import nltk
-from nltk.tokenize import sent_tokenize
+"""Response generator with intent routing, adaptive length, and follow-up questions."""
 
-nltk.download('punkt_tab', quiet=True)
-nltk.download('punkt', quiet=True)
+import logging
+import re
+from typing import Dict, List, Optional, Tuple
+
+from groq import AsyncGroq
+from nltk.tokenize import sent_tokenize
+import nltk
+
+nltk.download("punkt_tab", quiet=True)
+nltk.download("punkt", quiet=True)
+
+from src.config.settings import LLMConfig, RAGConfig
+from src.config.prompts import RELATED_QUESTIONS_MARKER, PromptTemplates
+from src.utils.intent_router import IntentResult, detect_intent, words_to_max_tokens
+from src.utils.scripture import truncate_passage
+
+logger = logging.getLogger(__name__)
+
 
 class WisdomResponseGenerator:
-    """Enhanced response generator for Vedic wisdom"""
-    
+    """Intent-aware response generator with Markdown structure and follow-ups."""
+
     def __init__(self):
-        """Initialize generator with LLM client and templates"""
         try:
             self.api_keys = [
                 key for key in [LLMConfig.API_KEY1, LLMConfig.API_KEY2, LLMConfig.API_KEY3]
                 if key
             ]
             self.current_key_index = 0
-            self.templates = PromptTemplates
             self.client = self._get_client()
-            logging.info("WisdomResponseGenerator initialized successfully")
+            logger.info("WisdomResponseGenerator initialized successfully")
         except Exception as e:
-            logging.error(f"Generator initialization failed: {e}")
+            logger.error("Generator initialization failed: %s", e)
             self.client = None
 
     def _get_client(self):
-        """Create a client using the current API key"""
         if not self.api_keys:
             return None
         api_key = self.api_keys[self.current_key_index]
         self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
         return AsyncGroq(api_key=api_key)
-    
-    def _determine_response_length(self, word_count: int) -> int:
-        """Determine appropriate response length based on query complexity"""
-        # Base token length - adjust these multipliers based on your needs
-        base_tokens = max(200, word_count * 50)  # Minimum 200 tokens
-        
-        # Cap maximum tokens
-        return min(base_tokens, 900)  # Maximum 800 tokens
 
-    async def generate_answer(self, query: str, verses: List[Dict],word_count :int) -> Dict:
-        """Generate contextual answers from retrieved verses"""
+    async def generate_answer(
+        self,
+        query: str,
+        verses: List[Dict],
+        word_count: int,
+        conversation_context: str = "",
+        has_conversation: bool = False,
+        intent_result: Optional[IntentResult] = None,
+    ) -> Dict:
         try:
+            intent = intent_result or detect_intent(query, has_conversation)
+
+            if intent["intent"] == "non_philosophical":
+                return self._generate_clarification_response(query)
+
+            if intent["intent"] == "greeting":
+                return await self._generate_greeting_response(query, intent)
+
             if not verses or self.client is None:
                 return self._handle_empty_results(verses)
 
-            query_type = classify_query(query)
-            if query_type == "non_philosophical":
-                return self._generate_clarification_response(query)
-
-            prompt = self._prepare_prompt(query, verses, query_type)
-            
-            # Determine appropriate response length
-            max_tokens = self._determine_response_length(word_count)
-            
+            context_verses = self._select_context_verses(verses)
+            prompt = self._prepare_prompt(
+                query, context_verses, intent, conversation_context
+            )
+            max_tokens = words_to_max_tokens(intent["target_words"])
             response = await self._generate_llm_response(prompt, max_tokens)
+            answer_text, related = self._extract_related_questions(response)
 
-            return self._format_response(response, verses)
-            
+            return self._format_response(answer_text, verses, context_verses, related)
         except Exception as e:
-            logging.error(f"Answer generation failed: {e}")
+            logger.error("Answer generation failed: %s", e)
             return self._generate_fallback_response(e, verses)
 
-    def _prepare_prompt(self, query: str, verses: List[Dict], query_type: str) -> str:
-        """Prepare contextualized prompt based on query type"""
-        verse_citations = self._format_verse_citations(verses[:3])
-        
-        # Access the template attribute based on query_type
-        template = getattr(self.templates, query_type, self.templates.default)
-        
-        return template.format(query=query, verses=verse_citations)
+    def _select_context_verses(self, verses: List[Dict]) -> List[Dict]:
+        """One primary + up to two supporting verses."""
+        limit = min(RAGConfig.CONTEXT_VERSES, 3)
+        return verses[:limit]
 
+    def _prepare_prompt(
+        self,
+        query: str,
+        verses: List[Dict],
+        intent: IntentResult,
+        conversation_context: str,
+    ) -> str:
+        verse_citations = self._format_verse_citations(verses)
+        conv_block = ""
+        if conversation_context:
+            conv_block = f"\n{conversation_context}\n"
+        return PromptTemplates.format_prompt(
+            intent["intent"],
+            query,
+            verse_citations,
+            conversation_context=conv_block,
+        )
 
-    async def _generate_llm_response(self, prompt: str, max_tokens: int) -> str:
-        """Generate response using LLM with enhanced error handling and validation"""
-        try:
-            response = await self.client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model="llama-3.3-70b-versatile",
-                max_tokens=max_tokens,
-                temperature=0.7
-            )
-            
-            response_text = response.choices[0].message.content.strip()
-            
-            # # Enhanced validation with specific checks
-            # if not self._validate_response(response_text):
-            #     # Generate a structured fallback response instead of failing
-            #     return self._generate_structured_fallback(prompt)
-            
-            # Ensure complete sentences
-            response_text = self._ensure_complete_sentences(response_text)
-            
-            return self._postprocess_response(response_text)
-            
-        except Exception as e:
-            logging.error(f"LLM response generation failed: {e}")
-            return self._generate_structured_fallback(prompt)
     def _format_verse_citations(self, verses: List[Dict]) -> str:
-        """Format verses for citation in prompt"""
         citations = []
-        for v in verses:
-            citation = f"[{v['book']} {v['chapter']}.{v['verse']}]: {v['translation']}\n"
-            citation += f"Explanation: {v['explanation']}"
+        roles = ["PRIMARY", "SUPPORTING", "SUPPORTING"]
+        for idx, verse in enumerate(verses):
+            role = roles[idx] if idx < len(roles) else "RELATED"
+            ref = f"{verse['book']} {verse['chapter']}.{verse['verse']}"
+            translation = truncate_passage(verse.get("translation") or "", 350)
+            explanation = truncate_passage(verse.get("explanation") or "", 400)
+            citation = f"[{role}: {ref}]\nTranslation: {translation}"
+            if explanation and explanation != translation:
+                citation += f"\nContext: {explanation}"
             citations.append(citation)
         return "\n\n".join(citations)
 
-    def _format_response(self, response: str, verses: List[Dict]) -> Dict:
-        """Format final response with metadata"""
-        return {
-            "type": "wisdom_response",
-            "verse": verses[0],
-            "response": {
-                "summary": response,
-                "sources": [f"{v['book']} {v['chapter']}.{v['verse']}" for v in verses[:3]]
-            }
-        }
+    async def _generate_llm_response(self, prompt: str, max_tokens: int) -> str:
+        response = await self.client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are DHARMA, a wise teacher of ancient scripture. "
+                        "Synthesize teachings into clear concepts — never copy long passages. "
+                        "Always use Markdown. Include inline citations like (Bhagavad Gita 2.47)."
+                    ),
+                },
+                {"role": "user", "content": prompt},
+            ],
+            model=LLMConfig.MODEL_NAME,
+            max_tokens=max_tokens,
+            temperature=LLMConfig.TEMPERATURE,
+        )
+        text = response.choices[0].message.content.strip()
+        text = self._ensure_complete_sentences(text)
+        return self._postprocess_response(text)
 
-    def _generate_clarification_response(self, query: str) -> Dict:
-        """Generate response for non-philosophical queries"""
+    async def _generate_greeting_response(
+        self, query: str, intent: IntentResult
+    ) -> Dict:
+        if self.client is None:
+            return {
+                "type": "clarification",
+                "response": {
+                    "summary": (
+                        "# Welcome\n\n"
+                        "Namaste. I am DHARMA — ask me about the Bhagavad Gita, "
+                        "Yoga Sutras, dharma, yoga, or meditation."
+                    ),
+                    "sources": [],
+                    "related_questions": [
+                        "What is karma yoga?",
+                        "What does Patanjali teach about meditation?",
+                        "How can I practice detachment?",
+                    ],
+                },
+            }
+
+        prompt = PromptTemplates.format_prompt("greeting", query, verses="")
+        text = await self._generate_llm_response(
+            prompt, words_to_max_tokens(intent["target_words"])
+        )
+        answer, related = self._extract_related_questions(text)
         return {
             "type": "clarification",
             "response": {
-                "summary": self.templates.clarification.format(query=query),
-                "sources": []
-            }
+                "summary": answer,
+                "sources": [],
+                "related_questions": related
+                or [
+                    "What is dharma?",
+                    "What is the purpose of yoga?",
+                    "What did Krishna teach Arjuna?",
+                ],
+            },
+        }
+
+    def _extract_related_questions(self, text: str) -> Tuple[str, List[str]]:
+        if RELATED_QUESTIONS_MARKER not in text:
+            return text, []
+
+        main, _, tail = text.partition(RELATED_QUESTIONS_MARKER)
+        questions = []
+        for line in tail.strip().splitlines():
+            cleaned = re.sub(r"^[-*•\d.]+\s*", "", line).strip()
+            if cleaned.endswith("?"):
+                questions.append(cleaned)
+            elif cleaned and len(questions) < 3:
+                questions.append(cleaned.rstrip(".") + "?")
+
+        return main.strip(), questions[:3]
+
+    def _format_response(
+        self,
+        response: str,
+        verses: List[Dict],
+        context_verses: List[Dict],
+        related_questions: List[str],
+    ) -> Dict:
+        primary = verses[0] if verses else None
+        if primary and primary.get("confidence_score") is None:
+            primary["confidence_score"] = primary.get("final_score")
+
+        source_refs = [
+            f"{v['book']} {v['chapter']}.{v['verse']}" for v in context_verses
+        ]
+
+        if not related_questions:
+            related_questions = self._default_related_questions(context_verses)
+
+        return {
+            "type": "wisdom_response",
+            "verse": primary,
+            "response": {
+                "summary": response,
+                "sources": source_refs,
+                "related_questions": related_questions,
+            },
+        }
+
+    def _default_related_questions(self, verses: List[Dict]) -> List[str]:
+        if not verses:
+            return [
+                "What is karma yoga?",
+                "How does Patanjali define meditation?",
+                "What is the nature of the self?",
+            ]
+        ref = verses[0]
+        book = ref.get("book", "scripture")
+        return [
+            f"What else does {book} teach on this topic?",
+            "How can I apply this teaching daily?",
+            "What is the deeper philosophical meaning?",
+        ]
+
+    def _generate_clarification_response(self, query: str) -> Dict:
+        return {
+            "type": "clarification",
+            "response": {
+                "summary": PromptTemplates.clarification.format(query=query),
+                "sources": [],
+                "related_questions": [
+                    "What is dharma?",
+                    "What is karma yoga?",
+                    "What are the Yoga Sutras?",
+                ],
+            },
         }
 
     def _handle_empty_results(self, verses: Optional[List[Dict]]) -> Dict:
-        """Handle cases with no relevant verses"""
-        if not verses:
-            return {
-                "type": "wisdom_response",
-                "verse": None,
-                "response": {
-                    "summary": "I apologize, but I couldn't find specific verses that directly address your question. Could you please rephrase or ask about a related topic?",
-                    "sources": []
-                }
-            }
-        return {"error": "No relevant verses found"}
-    
-    def _validate_response(self, response: str) -> bool:
-        """Enhanced response validation with detailed checks"""
-        if not response:
-            logging.warning("Empty response received")
-            return False
-            
-        # Minimum length check (70 words)
-        if len(response.split()) < 70:
-            logging.warning(f"Response too short: {len(response.split())} words")
-            return False
-            
-        # Check for complete sentences
-        if not response.strip().endswith(('.', '?', '!')):
-            logging.warning("Response doesn't end with proper punctuation")
-            return False
-            
-        # Check for coherence (at least 2 sentences)
-        sentences = response.split('.')
-        if len([s for s in sentences if len(s.strip()) > 0]) < 2:
-            logging.warning("Response lacks multiple complete sentences")
-            return False
-            
-        # Check for excessive repetition
-        words = response.lower().split()
-        word_freq = {}
-        for word in words:
-            if len(word) > 3:  # Only check substantial words
-                word_freq[word] = word_freq.get(word, 0) + 1
-                if word_freq[word] > 3:  # Word appears more than 3 times
-                    logging.warning(f"Excessive repetition of word: {word}")
-                    return False
-                    
-        return True
-            
+        return {
+            "type": "wisdom_response",
+            "verse": None,
+            "response": {
+                "summary": (
+                    "# Summary\n\n"
+                    "I could not find specific verses for your question. "
+                    "Try rephrasing with more detail or naming a scripture, chapter, or verse."
+                ),
+                "sources": [],
+                "related_questions": [
+                    "What is karma yoga?",
+                    "What does the Bhagavad Gita teach about duty?",
+                    "What is meditation according to Patanjali?",
+                ],
+            },
+        }
+
     def _ensure_complete_sentences(self, text: str) -> str:
-        """Ensure response ends with complete sentences"""
         sentences = sent_tokenize(text)
-        
         if not sentences:
             return text
-            
-        # Keep only complete sentences
-        complete_sentences = []
+        complete = []
         for sentence in sentences:
-            if sentence.strip().endswith(('.', '?', '!')):
-                complete_sentences.append(sentence)
+            if sentence.strip().endswith((".", "?", "!", ":", "|")) or sentence.startswith(
+                ("#", "|", "-")
+            ):
+                complete.append(sentence)
+            elif sentence == sentences[-1] and not sentence.startswith("#"):
+                complete.append(sentence.strip() + ".")
             else:
-                # If last sentence is incomplete, try to complete it
-                if sentence == sentences[-1]:
-                    sentence = sentence.strip() + '.'
-                complete_sentences.append(sentence)
-                
-        return ' '.join(complete_sentences)
+                complete.append(sentence)
+        return " ".join(complete)
 
     def _postprocess_response(self, response: str) -> str:
-        """Clean and format the response"""
-        import re
-        
-        # Ensure proper formatting
         response = response.strip()
-        
-        # Fix common issues
-        response = re.sub(r'\s+', ' ', response)  # Fix multiple spaces
-        response = re.sub(r'\[\s*(\d+)\s*\]', r'[\1]', response)  # Fix citation spacing
-        response = re.sub(r'\*', '', response)  # Remove all asterisks and replace with space
-
-        # Ensure proper sentence endings
-        response = re.sub(r'([a-z])\s+([A-Z])', r'\1. \2', response)
-        
+        response = re.sub(r"\n{4,}", "\n\n\n", response)
+        response = re.sub(r"[ \t]+\n", "\n", response)
         return response
 
     def _generate_fallback_response(self, error: Exception, verses: List[Dict]) -> Dict:
-        """Generate a fallback response when answer generation fails"""
-        logging.error(f"Using fallback response due to: {error}")
-        summary = (
-            "I understand your question and have found relevant wisdom from the texts. "
-            "However, I need to ensure I provide a complete and accurate response. "
-            "Could you please rephrase your question or ask for specific aspects you'd like me to address?"
-        )
+        logger.error("Using fallback response due to: %s", error)
+        context = verses[: RAGConfig.CONTEXT_VERSES] if verses else []
         return {
             "type": "wisdom_response",
             "verse": verses[0] if verses else None,
             "response": {
-                "summary": summary,
+                "summary": self._generate_structured_fallback(),
                 "sources": [
-                    f"{v['book']} {v['chapter']}.{v['verse']}" for v in verses[:3]
-                ] if verses else [],
+                    f"{v['book']} {v['chapter']}.{v['verse']}" for v in context
+                ],
+                "related_questions": [
+                    "What is karma yoga?",
+                    "What is dharma?",
+                    "How do I practice meditation?",
+                ],
             },
         }
-    
-    def _generate_structured_fallback(self, prompt: str) -> str:
-        """Generate a structured fallback response"""
-        return (
-            "Based on the ancient wisdom traditions, I understand your question "
-            "about this important topic. While I've found relevant verses that "
-            "address this, let me provide a clear and structured response that "
-            "captures their essential teachings. The ancient texts emphasize "
-            "the importance of approaching this matter with deep understanding "
-            "and practical wisdom."
-        )
+
+    def _generate_structured_fallback(self) -> str:
+        return """# Summary
+I found relevant teachings but could not complete a full response right now. Please try again.
+
+---
+
+# Key Insights
+- Ancient wisdom emphasizes clarity, duty, and inner equanimity.
+- The texts encourage reflection rather than hasty conclusions.
+
+---
+
+# Practical Takeaways
+- Rephrase your question with a specific focus.
+- Ask about one principle at a time for the clearest guidance.
+"""
