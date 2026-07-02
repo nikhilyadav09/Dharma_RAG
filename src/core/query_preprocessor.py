@@ -7,8 +7,9 @@ import nltk
 
 # Ensure NLTK data is available during setup
 try:
-    nltk.download('stopwords', quiet=True)
+    nltk.download('punkt_tab', quiet=True)
     nltk.download('punkt', quiet=True)
+    nltk.download('stopwords', quiet=True)
 except Exception as e:
     logging.error(f"Failed to download NLTK data: {e}")
 

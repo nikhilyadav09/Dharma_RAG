@@ -4,17 +4,20 @@ from sklearn.metrics.pairwise import cosine_similarity
 from nltk.translate.bleu_score import sentence_bleu
 from rouge_score import rouge_scorer
 import pandas as pd
+from pathlib import Path
 from typing import List, Dict
 import json
 import logging
+
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
 class WisdomEvaluator:
     def __init__(self):
         self.model = SentenceTransformer('all-MiniLM-L6-v2')
         self.rouge_scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
         # Load reference questions and translations
-        self.bhagavad_gita_refs = pd.read_csv('/home/nikhil/sitare /others/NYD_Hackathon/data/Bhagwad_Gita_Verses_English_Questions.csv')
-        self.yoga_sutras_refs = pd.read_csv('/home/nikhil/sitare /others/NYD_Hackathon/data/Bhagwad_Gita_Verses_English_Questions.csv')
+        self.bhagavad_gita_refs = pd.read_csv(DATA_DIR / "Bhagwad_Gita_Verses_English_Questions.csv")
+        self.yoga_sutras_refs = pd.read_csv(DATA_DIR / "Patanjali_Yoga_Sutras_Verses_English_Questions.csv")
         
     def find_matching_reference(self, query: str) -> Dict:
         """Find matching reference question and translation from CSV files"""

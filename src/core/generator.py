@@ -6,6 +6,8 @@ from src.config.prompts import PromptTemplates
 from src.utils.query_classifier import classify_query
 import nltk
 from nltk.tokenize import sent_tokenize
+
+nltk.download('punkt_tab', quiet=True)
 nltk.download('punkt', quiet=True)
 
 class WisdomResponseGenerator:
@@ -14,7 +16,10 @@ class WisdomResponseGenerator:
     def __init__(self):
         """Initialize generator with LLM client and templates"""
         try:
-            self.api_keys = [LLMConfig.API_KEY1, LLMConfig.API_KEY2, LLMConfig.API_KEY3]
+            self.api_keys = [
+                key for key in [LLMConfig.API_KEY1, LLMConfig.API_KEY2, LLMConfig.API_KEY3]
+                if key
+            ]
             self.current_key_index = 0
             self.templates = PromptTemplates
             self.client = self._get_client()
@@ -25,8 +30,10 @@ class WisdomResponseGenerator:
 
     def _get_client(self):
         """Create a client using the current API key"""
+        if not self.api_keys:
+            return None
         api_key = self.api_keys[self.current_key_index]
-        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)  # Increment and reset index
+        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
         return AsyncGroq(api_key=api_key)
     
     def _determine_response_length(self, word_count: int) -> int:
@@ -120,7 +127,7 @@ class WisdomResponseGenerator:
         return {
             "type": "clarification",
             "response": {
-                "summary": self.templates['clarification'].format(query=query),
+                "summary": self.templates.clarification.format(query=query),
                 "sources": []
             }
         }
@@ -209,11 +216,24 @@ class WisdomResponseGenerator:
         
         return response
 
-    def _generate_fallback_response(self) -> str:
-            """Generate a fallback response when validation fails"""
-            return ("I understand your question and have found relevant wisdom from the texts. "
-                    "However, I need to ensure I provide a complete and accurate response. "
-                    "Could you please rephrase your question or ask for specific aspects you'd like me to address?")
+    def _generate_fallback_response(self, error: Exception, verses: List[Dict]) -> Dict:
+        """Generate a fallback response when answer generation fails"""
+        logging.error(f"Using fallback response due to: {error}")
+        summary = (
+            "I understand your question and have found relevant wisdom from the texts. "
+            "However, I need to ensure I provide a complete and accurate response. "
+            "Could you please rephrase your question or ask for specific aspects you'd like me to address?"
+        )
+        return {
+            "type": "wisdom_response",
+            "verse": verses[0] if verses else None,
+            "response": {
+                "summary": summary,
+                "sources": [
+                    f"{v['book']} {v['chapter']}.{v['verse']}" for v in verses[:3]
+                ] if verses else [],
+            },
+        }
     
     def _generate_structured_fallback(self, prompt: str) -> str:
         """Generate a structured fallback response"""

@@ -3,12 +3,17 @@ import psycopg2
 from psycopg2.extras import execute_values
 import logging
 import sys
+from pathlib import Path
 from sentence_transformers import SentenceTransformer
-import numpy as np
 import torch
 from tqdm import tqdm
 
+from src.config.settings import DatabaseConfig
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = PROJECT_ROOT / "data"
 
 def generate_embeddings(texts: list[str], batch_size: int = 32) -> list[list[float]]:
     """Generate embeddings for given texts using sentence-transformers with batching"""
@@ -45,8 +50,8 @@ def generate_embeddings(texts: list[str], batch_size: int = 32) -> list[list[flo
 def verify_data_files() -> tuple[pd.DataFrame, pd.DataFrame]:
     """Verify the processed data files exist and have correct structure"""
     try:
-        gita_path = '/home/nikhil/sitare /others/NYD_Hackathon/data/processed_bhagwat_gita.csv'
-        yoga_path = '/home/nikhil/sitare /others/NYD_Hackathon/data/processed_yoga_sutra.csv'
+        gita_path = DATA_DIR / "processed_bhagwat_gita.csv"
+        yoga_path = DATA_DIR / "processed_yoga_sutra.csv"
 
         gita_df = pd.read_csv(gita_path)
         yoga_df = pd.read_csv(yoga_path)
@@ -81,12 +86,7 @@ def verify_data_files() -> tuple[pd.DataFrame, pd.DataFrame]:
 def setup_database():
     """Setup database with correct schema"""
     try:
-        conn = psycopg2.connect(
-            dbname="ancient_wisdoms",
-            user="postgres",
-            password= 'Nikhil@930',
-            host="localhost"
-        )
+        conn = psycopg2.connect(**DatabaseConfig.CONNECTION_PARAMS)
         cur = conn.cursor()
 
         cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
@@ -103,10 +103,6 @@ def setup_database():
             explanation TEXT,
             embedding vector(384)
         );
-        """)
-
-        cur.execute("""
-        CREATE INDEX embedding_idx ON verses USING ivfflat (embedding vector_cosine_ops);
         """)
 
         conn.commit()
@@ -189,6 +185,13 @@ def main():
 
         insert_dataset(conn, cur, gita_df, "Bhagavad Gita")
         insert_dataset(conn, cur, yoga_df, "Yoga Sutras")
+
+        cur.execute("DROP INDEX IF EXISTS embedding_idx;")
+        cur.execute("""
+        CREATE INDEX embedding_idx ON verses
+        USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+        """)
+        conn.commit()
 
         verify_insertion(conn, cur)
 

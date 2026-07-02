@@ -5,6 +5,11 @@ from sentence_transformers import SentenceTransformer
 from rank_bm25 import BM25Okapi
 from nltk.tokenize import word_tokenize
 import logging
+import nltk
+
+nltk.download('punkt_tab', quiet=True)
+nltk.download('punkt', quiet=True)
+
 from src.config.settings import DatabaseConfig
 from functools import lru_cache
 
