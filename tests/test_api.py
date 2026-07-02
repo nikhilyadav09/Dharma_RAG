@@ -37,7 +37,9 @@ def mock_pipeline():
 
 @pytest.fixture
 def client(mock_pipeline):
-    with patch("api.dependencies.VedicWisdomPipeline", return_value=mock_pipeline):
+    with patch(
+        "api.dependencies.VedicWisdomPipeline", return_value=mock_pipeline
+    ):
         from api.main import app
 
         with TestClient(app) as test_client:
@@ -52,8 +54,23 @@ def test_health_endpoint(client):
     assert data["service"] == "dharma-api"
 
 
-def test_ready_endpoint(client):
-    with patch("api.routes.health.check_database_connection", return_value=True):
+def test_ready_before_pipeline_init(client):
+    """Ready returns 503 until the pipeline is lazily initialized."""
+    with patch(
+        "api.routes.health.check_database_connection", return_value=True
+    ):
+        response = client.get("/ready")
+    assert response.status_code == 503
+    data = response.json()["detail"]
+    assert data["pipeline_initialized"] is False
+    assert data["database_connected"] is True
+
+
+def test_ready_endpoint(client, mock_pipeline):
+    with patch(
+        "api.routes.health.check_database_connection", return_value=True
+    ):
+        client.post("/api/v1/chat", json={"query": "What is karma yoga?"})
         response = client.get("/ready")
     assert response.status_code == 200
     data = response.json()
@@ -79,6 +96,23 @@ def test_chat_endpoint(client, mock_pipeline):
 def test_chat_validation_rejects_empty_query(client):
     response = client.post("/api/v1/chat", json={"query": ""})
     assert response.status_code == 422
+
+
+def test_get_pipeline_returns_503_when_init_fails():
+    from api.dependencies import get_pipeline, shutdown_pipeline
+
+    shutdown_pipeline()
+    with patch(
+        "api.dependencies.VedicWisdomPipeline",
+        side_effect=RuntimeError("init failed"),
+    ):
+        from fastapi import HTTPException
+
+        with pytest.raises(HTTPException) as exc_info:
+            get_pipeline()
+        assert exc_info.value.status_code == 503
+        assert "init failed" in str(exc_info.value.detail)
+    shutdown_pipeline()
 
 
 def test_evaluation_summary_endpoint(client):

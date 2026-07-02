@@ -1,4 +1,5 @@
 import logging
+import threading
 from contextlib import asynccontextmanager
 from typing import Optional
 
@@ -10,31 +11,46 @@ logger = logging.getLogger(__name__)
 
 _pipeline: Optional[VedicWisdomPipeline] = None
 _pipeline_error: Optional[str] = None
+_init_lock = threading.Lock()
 
 
-def initialize_pipeline() -> None:
-    """Create the singleton RAG pipeline instance."""
+def _lazy_initialize_pipeline() -> bool:
+    """Create the singleton pipeline on first use. Returns True if ready."""
     global _pipeline, _pipeline_error
-    try:
-        logger.info("Initializing VedicWisdomPipeline singleton...")
-        _pipeline = VedicWisdomPipeline()
-        _pipeline_error = None
-        logger.info("VedicWisdomPipeline ready")
-    except Exception as exc:
-        _pipeline = None
-        _pipeline_error = str(exc)
-        logger.exception("Failed to initialize VedicWisdomPipeline: %s", exc)
+
+    if _pipeline is not None:
+        return True
+
+    with _init_lock:
+        if _pipeline is not None:
+            return True
+
+        try:
+            logger.info("Lazy-initializing VedicWisdomPipeline...")
+            _pipeline = VedicWisdomPipeline()
+            _pipeline_error = None
+            logger.info("VedicWisdomPipeline ready")
+            return True
+        except Exception as exc:
+            _pipeline = None
+            _pipeline_error = str(exc)
+            logger.exception(
+                "Failed to initialize VedicWisdomPipeline: %s", exc
+            )
+            return False
 
 
 def shutdown_pipeline() -> None:
     """Clear the singleton pipeline reference on application shutdown."""
     global _pipeline, _pipeline_error
-    _pipeline = None
-    _pipeline_error = None
+    with _init_lock:
+        _pipeline = None
+        _pipeline_error = None
     logger.info("VedicWisdomPipeline shutdown complete")
 
 
 def is_pipeline_ready() -> bool:
+    """True only after the pipeline has been successfully initialized."""
     return _pipeline is not None
 
 
@@ -43,8 +59,8 @@ def get_pipeline_error() -> Optional[str]:
 
 
 def get_pipeline() -> VedicWisdomPipeline:
-    """FastAPI dependency that returns the singleton pipeline."""
-    if _pipeline is None:
+    """FastAPI dependency: lazy init, then return the singleton pipeline."""
+    if not _lazy_initialize_pipeline():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=_pipeline_error or "RAG pipeline is not initialized",
@@ -57,6 +73,6 @@ PipelineDependency = Depends(get_pipeline)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    initialize_pipeline()
+    """Application lifespan — pipeline is initialized lazily on first use."""
     yield
     shutdown_pipeline()
