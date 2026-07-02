@@ -1,0 +1,36 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: dharma-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.4"
+      - key: DB_SSLMODE
+        value: require
+      - key: ENABLE_RERANKER
+        value: "false"
+      - key: CORS_ORIGINS
+        value: https://dharma.nikhilyadav.dev
+      - key: LLM_MODEL_NAME
+        value: llama-3.3-70b-versatile
+      - key: LLM_MAX_TOKENS
+        value: "900"
+      - key: LLM_TEMPERATURE
+        value: "0.5"
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: LLM_API_KEY_1
+        sync: false

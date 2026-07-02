@@ -13,6 +13,8 @@ class DatabaseConfig:
         "host": os.getenv("DB_HOST"),
         "port": os.getenv("DB_PORT", "5432"),
     }
+    if os.getenv("DB_SSLMODE"):
+        CONNECTION_PARAMS["sslmode"] = os.getenv("DB_SSLMODE")
 
 class LLMConfig:
     """LLM configuration settings"""
