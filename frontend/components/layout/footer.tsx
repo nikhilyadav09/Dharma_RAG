@@ -6,18 +6,21 @@ import { Separator } from "@/components/ui/separator";
 const productLinks = [
   { href: "/chat", label: "Chat" },
   { href: "/about", label: "About" },
-  { href: "/architecture", label: "Architecture" },
-  { href: "/evaluation", label: "Evaluation" },
 ];
 
-const resourceLinks = [
+const apiBaseUrl =
+  process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:8000";
+
+const developerLinks = [
+  { href: "/architecture", label: "Architecture" },
+  { href: "/evaluation", label: "Evaluation" },
   {
     href: "https://github.com/nikhilyadav09/Dharma_RAG",
     label: "GitHub",
     external: true,
   },
   {
-    href: "http://localhost:8000/docs",
+    href: `${apiBaseUrl}/docs`,
     label: "API Docs",
     external: true,
   },
@@ -26,16 +29,6 @@ const resourceLinks = [
     label: "Portfolio",
     external: true,
   },
-];
-
-const techStack = [
-  "Next.js",
-  "FastAPI",
-  "PostgreSQL",
-  "pgvector",
-  "BGE",
-  "Groq",
-  "Docker",
 ];
 
 export function Footer() {
@@ -69,9 +62,6 @@ export function Footer() {
                 Nikhil Yadav
               </Link>
             </p>
-            <p className="text-xs text-muted-foreground">
-              {techStack.join(" · ")}
-            </p>
           </div>
 
           <div>
@@ -91,9 +81,9 @@ export function Footer() {
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold">Resources</h2>
+            <h2 className="text-sm font-semibold">Developer</h2>
             <ul className="mt-4 space-y-2.5">
-              {resourceLinks.map((link) => (
+              {developerLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

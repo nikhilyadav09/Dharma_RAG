@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUp, Sparkles } from "lucide-react";
-import { forwardRef, useCallback } from "react";
+import { forwardRef, useCallback, useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -13,13 +13,37 @@ interface ChatInputPlaceholderProps {
   isLoading?: boolean;
 }
 
+const MAX_TEXTAREA_HEIGHT_PX = 144; // matches max-h-36
+
 export const ChatInputPlaceholder = forwardRef<
   HTMLTextAreaElement,
   ChatInputPlaceholderProps
 >(function ChatInputPlaceholder(
   { value, onChange, onSubmit, disabled = false, isLoading = false },
-  ref,
+  forwardedRef,
 ) {
+  const localRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const setRefs = useCallback(
+    (node: HTMLTextAreaElement | null) => {
+      localRef.current = node;
+      if (typeof forwardedRef === "function") {
+        forwardedRef(node);
+      } else if (forwardedRef) {
+        forwardedRef.current = node;
+      }
+    },
+    [forwardedRef],
+  );
+
+  // Auto-resize the textarea to fit its content, up to max-h-36.
+  useEffect(() => {
+    const el = localRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT_PX)}px`;
+  }, [value]);
+
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === "Enter" && !event.shiftKey) {
@@ -38,7 +62,7 @@ export const ChatInputPlaceholder = forwardRef<
             Ask a question about dharma or yoga
           </label>
           <textarea
-            ref={ref}
+            ref={setRefs}
             id="chat-input"
             rows={1}
             value={value}
@@ -46,7 +70,7 @@ export const ChatInputPlaceholder = forwardRef<
             onKeyDown={handleKeyDown}
             disabled={disabled || isLoading}
             placeholder="Ask about dharma, yoga, or consciousness..."
-            className="max-h-36 min-h-[24px] w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed sm:text-base"
+            className="max-h-36 min-h-[24px] w-full resize-none overflow-y-auto bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed sm:text-base"
             aria-describedby="chat-input-hint"
           />
         </div>

@@ -7,24 +7,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getApiClient } from "@/lib/api";
 import type { CorpusStats } from "@/types";
 
-const STATIC_META = {
-  embeddingModel: "bge-small-en-v1.5",
-  retrievalType: "Hybrid + rerank",
-};
-
 const FALLBACK_STATS = [
   { label: "Sacred texts", value: "2" },
   { label: "Verses indexed", value: "867" },
-  { label: "Embedding model", value: STATIC_META.embeddingModel },
-  { label: "Retrieval method", value: STATIC_META.retrievalType },
 ];
 
 function buildStatsFromApi(data: CorpusStats) {
   return [
     { label: "Sacred texts", value: String(data.books.length) },
     { label: "Verses indexed", value: data.total_verses.toLocaleString() },
-    { label: "Embedding model", value: STATIC_META.embeddingModel },
-    { label: "Retrieval method", value: STATIC_META.retrievalType },
   ];
 }
 
@@ -51,7 +42,7 @@ export function HomeStats() {
   }, []);
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mx-auto grid max-w-md gap-4 sm:grid-cols-2">
       {stats.map((stat) => (
         <Card
           key={stat.label}

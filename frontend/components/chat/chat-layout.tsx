@@ -17,6 +17,7 @@ import {
 import type { ChatMessage } from "@/types";
 
 const SESSION_STORAGE_KEY = "dharma-chat-session-id";
+const MESSAGES_STORAGE_KEY = "dharma-chat-messages";
 
 function getStoredSessionId(): string | undefined {
   if (typeof window === "undefined") {
@@ -29,6 +30,29 @@ function storeSessionId(sessionId: string): void {
   sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
 }
 
+function getStoredMessages(): ChatMessage[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+  try {
+    const raw = sessionStorage.getItem(MESSAGES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as ChatMessage[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function storeMessages(messages: ChatMessage[]): void {
+  try {
+    sessionStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
+  } catch {
+    // Storage may be full or unavailable (private browsing) — losing
+    // persistence here isn't worth surfacing an error to the user.
+  }
+}
+
 export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -38,10 +62,20 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initialQuerySent = useRef(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
     setSessionId(getStoredSessionId());
+    setMessages(getStoredMessages());
+    setHasHydrated(true);
   }, []);
+
+  useEffect(() => {
+    // Skip the pre-hydration render so we don't stomp stored messages with
+    // the initial empty state before getStoredMessages() has loaded.
+    if (!hasHydrated) return;
+    storeMessages(messages);
+  }, [messages, hasHydrated]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -143,6 +177,9 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
   );
 
   const handleClearChat = useCallback(() => {
+    if (messages.length > 0 && !window.confirm("Clear this conversation? This can't be undone.")) {
+      return;
+    }
     abortRef.current?.abort();
     abortRef.current = null;
     setMessages([]);
@@ -150,14 +187,15 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
     setInput("");
     setSessionId(undefined);
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    sessionStorage.removeItem(MESSAGES_STORAGE_KEY);
     inputRef.current?.focus();
-  }, []);
+  }, [messages.length]);
 
   const showSuggestions = messages.length === 0 && !isLoading;
   const hasMessages = messages.length > 0 || isLoading;
 
   return (
-    <PageContainer flush className="flex flex-col">
+    <PageContainer flush hideFooter className="flex flex-col">
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col">
         <div className="flex items-start justify-between gap-4 border-b border-border/60 px-4 py-4 sm:px-6 sm:py-5">
           <div>

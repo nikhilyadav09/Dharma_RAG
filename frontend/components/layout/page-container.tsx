@@ -9,6 +9,8 @@ interface PageContainerProps {
   size?: "default" | "narrow" | "wide";
   /** When true, main content fills viewport without default vertical padding (chat layout). */
   flush?: boolean;
+  /** When true, omits the site footer (chat layout doesn't need one). */
+  hideFooter?: boolean;
 }
 
 export function PageContainer({
@@ -16,6 +18,7 @@ export function PageContainer({
   className,
   size = "default",
   flush = false,
+  hideFooter = false,
 }: PageContainerProps) {
   return (
     <div className="flex min-h-screen flex-col">
@@ -26,7 +29,7 @@ export function PageContainer({
       >
         {flush ? children : <Container size={size}>{children}</Container>}
       </main>
-      <Footer />
+      {!hideFooter && <Footer />}
     </div>
   );
 }

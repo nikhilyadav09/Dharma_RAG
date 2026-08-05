@@ -23,6 +23,10 @@ const sections = [
     body: "The knowledge base includes 867 verses (700 Bhagavad Gita + 167 Yoga Sutras) with translation and explanation text embedded using BAAI/bge-small-en-v1.5 and stored in PostgreSQL with pgvector.",
   },
   {
+    title: "Why these texts?",
+    body: "The Bhagavad Gita offers practical wisdom on duty, devotion, and equanimity. The Yoga Sutras provide a systematic framework for consciousness and inner discipline — together forming a rich corpus for philosophical inquiry.",
+  },
+  {
     title: "How answers are generated",
     body: "Your question is preprocessed and routed by intent. Metadata lookup resolves explicit chapter/verse references; otherwise hybrid retrieval (pgvector + BM25 + cross-encoder reranking) finds relevant passages. Groq LLM synthesizes a structured Markdown answer with inline citations, related follow-up questions, and scripture source cards.",
   },

@@ -13,8 +13,6 @@ const navItems = [
   { href: "/", label: "Home" },
   { href: "/chat", label: "Chat" },
   { href: "/about", label: "About" },
-  { href: "/architecture", label: "Architecture" },
-  { href: "/evaluation", label: "Evaluation" },
 ];
 
 export function MobileNav() {

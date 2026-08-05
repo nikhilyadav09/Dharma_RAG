@@ -2,68 +2,17 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  BookOpen,
-  Brain,
-  Database,
-  Layers,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 import { Section } from "@/components/common/section";
-import { SectionHeading } from "@/components/common/section-heading";
 import { Container } from "@/components/common/container";
-import { HomeAboutSections, HomeExampleQuestions } from "@/components/home/home-sections";
+import { HomeExampleQuestions } from "@/components/home/home-sections";
 import { HomeStats } from "@/components/home/home-stats";
 import { WhyDharma } from "@/components/home/why-dharma";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-
-const features = [
-  {
-    icon: Brain,
-    title: "Advanced retrieval",
-    description:
-      "BGE embeddings, BM25 keyword search, cross-encoder reranking, and metadata-aware verse lookup.",
-  },
-  {
-    icon: BookOpen,
-    title: "Source-grounded answers",
-    description:
-      "Structured Markdown with inline citations, scripture badges, and collapsible verse cards.",
-  },
-  {
-    icon: Database,
-    title: "Production architecture",
-    description:
-      "Intent-aware prompts, multi-turn memory, related questions, FastAPI, and Next.js.",
-  },
-];
-
-const steps = [
-  {
-    icon: Layers,
-    step: "01",
-    title: "Ask with intention",
-    description: "Pose a question about dharma, yoga, a specific verse, or daily practice.",
-  },
-  {
-    icon: Database,
-    step: "02",
-    title: "Retrieve relevant verses",
-    description: "Metadata lookup, hybrid search, and reranking surface the best passages.",
-  },
-  {
-    icon: Sparkles,
-    step: "03",
-    title: "Receive grounded guidance",
-    description: "An intent-aware LLM synthesizes a clear answer with follow-up questions.",
-  },
-];
 
 export default function HomePage() {
   return (
@@ -91,7 +40,7 @@ export default function HomePage() {
               <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
                 DHARMA helps you explore philosophical guidance from the Bhagavad
                 Gita and Yoga Sutras — with intent-aware answers, inline citations,
-                multi-turn memory, and production-grade engineering.
+                and multi-turn memory.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link href="/chat">
@@ -100,10 +49,11 @@ export default function HomePage() {
                     <ArrowRight className="h-4 w-4" aria-hidden />
                   </Button>
                 </Link>
-                <Link href="/architecture">
-                  <Button variant="outline" size="lg" className="min-w-[180px]">
-                    View architecture
-                  </Button>
+                <Link
+                  href="/about"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Learn more about DHARMA
                 </Link>
               </div>
             </motion.div>
@@ -117,72 +67,6 @@ export default function HomePage() {
         </Section>
 
         <WhyDharma />
-
-        <HomeAboutSections />
-
-        <Section variant="muted" className="py-14 md:py-20">
-          <Container className="space-y-10">
-            <SectionHeading
-              title="Built for clarity and trust"
-              description="A retrieval-augmented experience with dynamic templates, cited sources, and follow-up discovery."
-              className="mx-auto max-w-2xl text-center"
-            />
-            <div className="grid gap-5 md:grid-cols-3">
-              {features.map((feature) => (
-                <Card
-                  key={feature.title}
-                  className="border-border/80 bg-card/80 transition-colors hover:border-accent/25"
-                >
-                  <CardContent className="space-y-4 p-6 md:p-7">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-muted">
-                      <feature.icon className="h-5 w-5 text-accent" aria-hidden />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-semibold">{feature.title}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </Container>
-        </Section>
-
-        <Section className="py-14 md:py-20">
-          <Container className="space-y-10">
-            <SectionHeading
-              title="How it works"
-              description="Three steps from question to cited, structured guidance."
-              className="mx-auto max-w-xl text-center"
-            />
-            <ol className="grid gap-6 md:grid-cols-3">
-              {steps.map((item) => (
-                <li key={item.step}>
-                  <Card className="h-full border-border/80">
-                    <CardContent className="space-y-4 p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-muted">
-                          <item.icon className="h-5 w-5 text-accent" aria-hidden />
-                        </div>
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {item.step}
-                        </span>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">{item.title}</h3>
-                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                          {item.description}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </li>
-              ))}
-            </ol>
-          </Container>
-        </Section>
 
         <HomeExampleQuestions />
 

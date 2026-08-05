@@ -14,18 +14,35 @@ const LOADING_STAGES = [
 
 const STAGE_MS = 2200;
 
+// After this long, a free-tier host is very plausibly waking up from an idle
+// sleep rather than the request being stuck — tell the user instead of
+// letting the last stage sit there looking frozen.
+const COLD_START_HINT_MS = 12_000;
+
 export function ResponsePlaceholder() {
   const [stageIndex, setStageIndex] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
+    const stageInterval = window.setInterval(() => {
       setStageIndex((prev) =>
         prev < LOADING_STAGES.length - 1 ? prev + 1 : prev,
       );
     }, STAGE_MS);
 
-    return () => window.clearInterval(interval);
+    const start = Date.now();
+    const elapsedInterval = window.setInterval(() => {
+      setElapsedMs(Date.now() - start);
+    }, 1000);
+
+    return () => {
+      window.clearInterval(stageInterval);
+      window.clearInterval(elapsedInterval);
+    };
   }, []);
+
+  const showColdStartHint = elapsedMs >= COLD_START_HINT_MS;
+  const elapsedSeconds = Math.floor(elapsedMs / 1000);
 
   return (
     <article
@@ -45,6 +62,9 @@ export function ResponsePlaceholder() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden />
             <span>{LOADING_STAGES[stageIndex]}</span>
+            {elapsedSeconds > 0 && (
+              <span className="text-muted-foreground/60">· {elapsedSeconds}s</span>
+            )}
           </div>
           <ol className="flex flex-wrap gap-2 text-[11px] text-muted-foreground/80" aria-hidden>
             {LOADING_STAGES.map((stage, index) => (
@@ -61,6 +81,12 @@ export function ResponsePlaceholder() {
               </li>
             ))}
           </ol>
+          {showColdStartHint && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Still working — the wisdom service may be waking up from idle. This
+              can take up to a minute on first use.
+            </p>
+          )}
         </div>
         <div className="space-y-2.5">
           <Skeleton className="h-3 w-[90%]" />
