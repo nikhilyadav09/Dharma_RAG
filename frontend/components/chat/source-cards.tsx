@@ -66,7 +66,7 @@ export function SourceCards({ sources = [], primaryVerse }: SourceCardsProps) {
                 type="button"
                 onClick={() => toggleSource(source.raw)}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-lg px-2 py-2.5 text-left text-sm transition-colors hover:bg-muted/50",
+                  "flex w-full flex-wrap items-center gap-2 rounded-lg px-2 py-2.5 text-left text-sm transition-colors hover:bg-muted/50",
                   isExpanded && "bg-muted/40",
                 )}
                 aria-expanded={isExpanded}
@@ -78,7 +78,7 @@ export function SourceCards({ sources = [], primaryVerse }: SourceCardsProps) {
                   )}
                   aria-hidden
                 />
-                <span className="min-w-0 flex-1 font-medium">{source.raw}</span>
+                <span className="flex-1 font-medium">{source.raw}</span>
                 <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
                   <Badge
                     variant="outline"
