@@ -6,6 +6,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 
 import { Section } from "@/components/common/section";
 import { Container } from "@/components/common/container";
+import { HeroFloatingCards } from "@/components/home/hero-floating-cards";
 import { HomeExampleQuestions } from "@/components/home/home-sections";
 import { HomeStats } from "@/components/home/home-stats";
 import { WhyDharma } from "@/components/home/why-dharma";
@@ -22,6 +23,7 @@ export default function HomePage() {
         <section className="relative overflow-hidden border-b border-border">
           <div className="bg-grid-subtle absolute inset-0 opacity-40" aria-hidden />
           <div className="absolute inset-0 bg-gradient-to-b from-accent-subtle/80 via-background/50 to-background" />
+          <HeroFloatingCards />
           <Container className="relative py-20 md:py-28 lg:py-32">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -56,15 +58,10 @@ export default function HomePage() {
                   Learn more about DHARMA
                 </Link>
               </div>
+              <HomeStats className="mt-8" />
             </motion.div>
           </Container>
         </section>
-
-        <Section className="py-14 md:py-16">
-          <Container>
-            <HomeStats />
-          </Container>
-        </Section>
 
         <WhyDharma />
 

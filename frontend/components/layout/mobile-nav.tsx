@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -44,13 +43,17 @@ export function MobileNav() {
         aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen((prev) => !prev)}
       >
-        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {open ? (
+          <X className="h-5 w-5" suppressHydrationWarning />
+        ) : (
+          <Menu className="h-5 w-5" suppressHydrationWarning />
+        )}
       </Button>
 
       {open ? (
         <div
           id="mobile-nav-panel"
-          className="fixed inset-x-0 top-16 z-40 border-b border-border bg-background/95 backdrop-blur-md"
+          className="fixed inset-x-0 top-16 z-40 border-b border-border bg-background shadow-lg"
           role="dialog"
           aria-modal="true"
           aria-label="Mobile navigation"
@@ -71,9 +74,8 @@ export function MobileNav() {
               </Link>
             ))}
           </nav>
-          <div className="flex items-center justify-between border-t border-border px-4 py-4">
-            <ThemeToggle />
-            <Link href="/chat" className="flex-1 pl-4">
+          <div className="border-t border-border px-4 py-4">
+            <Link href="/chat">
               <Button className="w-full">Ask</Button>
             </Link>
           </div>

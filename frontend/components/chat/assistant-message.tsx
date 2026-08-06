@@ -1,9 +1,9 @@
-import { Sparkles } from "lucide-react";
+"use client";
 
-import {
-  AnswerSection,
-  CollapsibleSection,
-} from "@/components/common/collapsible-section";
+import { Info, RotateCcw, Sparkles } from "lucide-react";
+import { useState } from "react";
+
+import { AnswerSection } from "@/components/common/collapsible-section";
 import { CopyButton } from "@/components/common/copy-button";
 import { MarkdownContent } from "@/components/common/markdown-content";
 import { ErrorState } from "@/components/common/error-state";
@@ -11,19 +11,24 @@ import { RelatedQuestions } from "@/components/chat/related-questions";
 import { ResponseMetadata } from "@/components/chat/response-metadata";
 import { SourceCards } from "@/components/chat/source-cards";
 import { VerseCardPlaceholder } from "@/components/chat/verse-card-placeholder";
+import { Button } from "@/components/ui/button";
 import type { ChatMessage } from "@/types";
 
 interface AssistantMessageProps {
   message: ChatMessage;
   onRetry?: (query: string) => void;
   onSelectQuestion?: (question: string) => void;
+  onRegenerate?: () => void;
 }
 
 export function AssistantMessage({
   message,
   onRetry,
   onSelectQuestion,
+  onRegenerate,
 }: AssistantMessageProps) {
+  const [showDetails, setShowDetails] = useState(false);
+
   if (message.status === "error") {
     return (
       <article className="space-y-4" aria-label="Assistant error">
@@ -44,11 +49,9 @@ export function AssistantMessage({
   const showSources =
     message.type === "wisdom_response" && (message.sources?.length ?? 0) > 0;
   const showVerse = message.type === "wisdom_response" && message.verse;
-  const showExplanation =
-    message.explanation &&
-    message.explanation.trim() !== message.verse?.translation?.trim();
   const showRelated =
     (message.relatedQuestions?.length ?? 0) > 0 && onSelectQuestion;
+  const hasMetadata = Boolean(message.metadata);
 
   return (
     <article className="space-y-4" aria-label="Assistant response">
@@ -60,17 +63,52 @@ export function AssistantMessage({
           <Sparkles className="h-4 w-4 text-accent" />
         </div>
         <div className="min-w-0 flex-1 space-y-4">
-          <AnswerSection actions={<CopyButton text={message.content} label="Copy response" />}>
+          <AnswerSection
+            actions={
+              <div className="flex items-center gap-1">
+                <CopyButton text={message.content} label="Copy response" size="icon" />
+                {onRegenerate ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    aria-label="Regenerate response"
+                    onClick={onRegenerate}
+                  >
+                    <RotateCcw className="h-4 w-4" aria-hidden />
+                  </Button>
+                ) : null}
+                {hasMetadata ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    aria-label={showDetails ? "Hide details" : "Show details"}
+                    aria-pressed={showDetails}
+                    onClick={() => setShowDetails((prev) => !prev)}
+                  >
+                    <Info className="h-4 w-4" aria-hidden />
+                  </Button>
+                ) : null}
+              </div>
+            }
+          >
             <MarkdownContent
               content={message.content}
               className="text-sm leading-relaxed sm:text-base"
             />
           </AnswerSection>
 
-          <ResponseMetadata
-            metadata={message.metadata}
-            sourcesCount={message.sources?.length ?? 0}
-          />
+          {showDetails ? (
+            <ResponseMetadata
+              metadata={message.metadata}
+              sourcesCount={message.sources?.length ?? 0}
+            />
+          ) : null}
+
+          {showVerse ? <VerseCardPlaceholder verse={message.verse} /> : null}
 
           {showRelated ? (
             <RelatedQuestions
@@ -79,19 +117,9 @@ export function AssistantMessage({
             />
           ) : null}
 
-          {showExplanation ? (
-            <CollapsibleSection title="Reasoning from scripture" defaultOpen={false}>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {message.explanation}
-              </p>
-            </CollapsibleSection>
-          ) : null}
-
           {showSources ? (
             <SourceCards sources={message.sources} primaryVerse={message.verse} />
           ) : null}
-
-          {showVerse ? <VerseCardPlaceholder verse={message.verse} /> : null}
         </div>
       </div>
     </article>

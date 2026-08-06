@@ -37,7 +37,7 @@ export function Navbar() {
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm text-accent-foreground transition-transform group-hover:scale-[1.02]">
                 ॐ
               </span>
-              <span className="hidden sm:inline">DHARMA</span>
+              <span>DHARMA</span>
             </Link>
 
             <nav className="hidden items-center gap-0.5 md:flex" aria-label="Main">
@@ -59,9 +59,7 @@ export function Navbar() {
             </nav>
 
             <div className="flex items-center gap-1">
-              <div className="hidden md:block">
-                <ThemeToggle />
-              </div>
+              <ThemeToggle />
               <Link href="/chat" className="hidden sm:inline-flex">
                 <Button size="sm">Ask</Button>
               </Link>

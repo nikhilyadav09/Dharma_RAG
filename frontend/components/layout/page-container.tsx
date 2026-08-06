@@ -25,9 +25,15 @@ export function PageContainer({
       <Navbar />
       <main
         id="main-content"
-        className={cn("flex-1", !flush && "py-10 md:py-14", className)}
+        className={cn("flex-1", !flush && "py-10 md:py-14", flush && className)}
       >
-        {flush ? children : <Container size={size}>{children}</Container>}
+        {flush ? (
+          children
+        ) : (
+          <Container size={size} className={className}>
+            {children}
+          </Container>
+        )}
       </main>
       {!hideFooter && <Footer />}
     </div>

@@ -86,7 +86,14 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
   }, [messages, isLoading, scrollToBottom]);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    // Skip on touch devices: autofocusing on mount pops the virtual keyboard
+    // and force-scrolls the page with zero user action, pushing the header
+    // off-screen before the user has even looked at it. Desktop autofocus
+    // is harmless (no keyboard, no scroll-jump) so it stays there.
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+    if (!isTouchDevice) {
+      inputRef.current?.focus();
+    }
   }, []);
 
   useEffect(() => {
@@ -176,6 +183,64 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
     [sendMessage],
   );
 
+  const handleStop = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
+  // Edit-and-resend: drop the edited message and everything after it, then
+  // resend the new content as a fresh turn.
+  const handleEditMessage = useCallback(
+    (id: string, newContent: string) => {
+      setMessages((prev) => {
+        const index = prev.findIndex((message) => message.id === id);
+        return index === -1 ? prev : prev.slice(0, index);
+      });
+      void sendMessage(newContent);
+    },
+    [sendMessage],
+  );
+
+  // Regenerate: drop the assistant answer and its triggering user message,
+  // then resend the same query as a fresh turn.
+  const handleRegenerate = useCallback(
+    (assistantId: string) => {
+      const assistantIndex = messages.findIndex((m) => m.id === assistantId);
+      if (assistantIndex === -1) return;
+      let userIndex = -1;
+      for (let i = assistantIndex - 1; i >= 0; i -= 1) {
+        if (messages[i].role === "user") {
+          userIndex = i;
+          break;
+        }
+      }
+      if (userIndex === -1) return;
+      const query = messages[userIndex].content;
+      setMessages((prev) => prev.slice(0, userIndex));
+      void sendMessage(query);
+    },
+    [messages, sendMessage],
+  );
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const isTyping =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable;
+
+      if (event.key === "/" && !isTyping) {
+        event.preventDefault();
+        inputRef.current?.focus();
+      } else if (event.key === "Escape" && isLoading) {
+        handleStop();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLoading, handleStop]);
+
   const handleClearChat = useCallback(() => {
     if (messages.length > 0 && !window.confirm("Clear this conversation? This can't be undone.")) {
       return;
@@ -228,6 +293,8 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
             isLoading={isLoading}
             onRetry={sendMessage}
             onSelectQuestion={handleSuggestion}
+            onEditMessage={handleEditMessage}
+            onRegenerate={handleRegenerate}
           />
           <div ref={messagesEndRef} aria-hidden />
         </div>
@@ -246,6 +313,7 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
               value={input}
               onChange={setInput}
               onSubmit={handleSubmit}
+              onStop={handleStop}
               isLoading={isLoading}
             />
           </div>

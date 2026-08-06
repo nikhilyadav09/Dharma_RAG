@@ -8,9 +8,6 @@ const productLinks = [
   { href: "/about", label: "About" },
 ];
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:8000";
-
 const developerLinks = [
   { href: "/architecture", label: "Architecture" },
   { href: "/evaluation", label: "Evaluation" },
@@ -19,24 +16,14 @@ const developerLinks = [
     label: "GitHub",
     external: true,
   },
-  {
-    href: `${apiBaseUrl}/docs`,
-    label: "API Docs",
-    external: true,
-  },
-  {
-    href: "https://nikhilyadav.dev",
-    label: "Portfolio",
-    external: true,
-  },
 ];
 
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-border bg-muted/25">
       <Container className="py-12 md:py-16">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
-          <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-[1.4fr_1fr_1fr] md:gap-10">
+          <div className="col-span-2 space-y-4 md:col-span-1">
             <div className="flex items-center gap-2.5">
               <span
                 className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm text-accent-foreground"

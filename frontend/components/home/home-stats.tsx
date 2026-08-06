@@ -2,64 +2,51 @@
 
 import { useEffect, useState } from "react";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { getApiClient } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import type { CorpusStats } from "@/types";
 
-const FALLBACK_STATS = [
-  { label: "Sacred texts", value: "2" },
-  { label: "Verses indexed", value: "867" },
-];
+const FALLBACK_STATS = {
+  books: 2,
+  verses: 867,
+};
 
-function buildStatsFromApi(data: CorpusStats) {
-  return [
-    { label: "Sacred texts", value: String(data.books.length) },
-    { label: "Verses indexed", value: data.total_verses.toLocaleString() },
-  ];
-}
-
-export function HomeStats() {
+/**
+ * Compact inline trust line — not a stat dashboard. A first-time visitor
+ * doesn't care about raw row counts on their own; this exists only to
+ * quietly establish scope ("this covers real, bounded scripture") right
+ * under the hero CTA.
+ */
+export function HomeStats({ className }: { className?: string }) {
   const [stats, setStats] = useState(FALLBACK_STATS);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
 
     getApiClient()
       .getCorpusStats(controller.signal)
-      .then((data) => {
-        setStats(buildStatsFromApi(data));
+      .then((data: CorpusStats) => {
+        setStats({ books: data.books.length, verses: data.total_verses });
       })
       .catch(() => {
         setStats(FALLBACK_STATS);
-      })
-      .finally(() => {
-        setIsLoading(false);
       });
 
     return () => controller.abort();
   }, []);
 
   return (
-    <div className="mx-auto grid max-w-md gap-4 sm:grid-cols-2">
-      {stats.map((stat) => (
-        <Card
-          key={stat.label}
-          className="border-border/80 bg-card/60 text-center transition-colors hover:border-accent/30 hover:bg-card"
-        >
-          <CardContent className="p-6 md:p-8">
-            {isLoading ? (
-              <Skeleton className="mx-auto h-9 w-24" />
-            ) : (
-              <p className="text-3xl font-semibold tracking-tight md:text-4xl">
-                {stat.value}
-              </p>
-            )}
-            <p className="mt-2 text-sm text-muted-foreground">{stat.label}</p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <p
+      className={cn(
+        "text-sm text-muted-foreground",
+        className,
+      )}
+    >
+      Grounded in the Bhagavad Gita &amp; Yoga Sutras
+      <span className="mx-2 text-muted-foreground/40" aria-hidden>
+        ·
+      </span>
+      {stats.verses.toLocaleString()} verses across {stats.books} sacred texts
+    </p>
   );
 }

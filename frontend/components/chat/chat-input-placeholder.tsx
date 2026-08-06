@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, Sparkles } from "lucide-react";
+import { ArrowUp, Square, Sparkles } from "lucide-react";
 import { forwardRef, useCallback, useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ interface ChatInputPlaceholderProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  onStop?: () => void;
   disabled?: boolean;
   isLoading?: boolean;
 }
@@ -19,7 +20,7 @@ export const ChatInputPlaceholder = forwardRef<
   HTMLTextAreaElement,
   ChatInputPlaceholderProps
 >(function ChatInputPlaceholder(
-  { value, onChange, onSubmit, disabled = false, isLoading = false },
+  { value, onChange, onSubmit, onStop, disabled = false, isLoading = false },
   forwardedRef,
 ) {
   const localRef = useRef<HTMLTextAreaElement | null>(null);
@@ -74,22 +75,37 @@ export const ChatInputPlaceholder = forwardRef<
             aria-describedby="chat-input-hint"
           />
         </div>
-        <Button
-          size="icon"
-          disabled={disabled || isLoading || !value.trim()}
-          className="h-10 w-10 shrink-0 rounded-xl"
-          aria-label="Send question"
-          onClick={onSubmit}
-        >
-          <ArrowUp className="h-4 w-4" />
-        </Button>
+        {isLoading ? (
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            className="h-10 w-10 shrink-0 rounded-xl"
+            aria-label="Stop generating"
+            onClick={onStop}
+          >
+            <Square className="h-3.5 w-3.5 fill-current" />
+          </Button>
+        ) : (
+          <Button
+            size="icon"
+            disabled={disabled || !value.trim()}
+            className="h-10 w-10 shrink-0 rounded-xl"
+            aria-label="Send question"
+            onClick={onSubmit}
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       <div
         id="chat-input-hint"
         className="flex items-center gap-1.5 border-t border-border/60 px-4 py-2 text-xs text-muted-foreground"
       >
         <Sparkles className="h-3 w-3 text-accent" aria-hidden />
-        Enter to send · Shift+Enter for newline
+        {isLoading
+          ? "Esc to stop"
+          : "Enter to send · Shift+Enter for newline · / to focus"}
       </div>
     </div>
   );

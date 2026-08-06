@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/*
+ * Make Tailwind's `dark:` variant follow the `.dark` class next-themes
+ * toggles on <html> (attribute="class" in app/layout.tsx), instead of
+ * Tailwind v4's default of following the OS-level prefers-color-scheme
+ * media query. Without this, every `dark:` utility used directly in JSX
+ * (badges, icons, etc.) ignores the in-app theme toggle entirely.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #faf9f7;
   --foreground: #171717;

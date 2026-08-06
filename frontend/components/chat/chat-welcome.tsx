@@ -1,44 +1,20 @@
 "use client";
 
-import { BookOpen, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
-interface ChatWelcomeProps {
-  onSelectQuestion?: (question: string) => void;
-}
-
-const highlights = [
-  "Grounded in Bhagavad Gita & Yoga Sutras",
-  "Inline citations and structured Markdown answers",
-  "Multi-turn memory with related follow-up questions",
-];
-
-export function ChatWelcome({ onSelectQuestion }: ChatWelcomeProps) {
+export function ChatWelcome() {
   return (
-    <div className="flex flex-col items-center px-2 py-8 text-center sm:py-12">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-muted">
-        <Sparkles className="h-7 w-7 text-accent" aria-hidden />
+    <div className="flex flex-col items-center px-2 py-4 text-center sm:py-6">
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent-muted">
+        <Sparkles className="h-5 w-5 text-accent" aria-hidden />
       </div>
-      <h2 className="mt-6 text-display text-2xl font-semibold tracking-tight sm:text-3xl">
+      <h2 className="mt-4 text-display text-xl font-semibold tracking-tight sm:text-2xl">
         Welcome to Wisdom Chat
       </h2>
-      <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
-        Ask about dharma, yoga, a specific verse, or daily practice. DHARMA routes
-        your question by intent, retrieves relevant scriptures, and synthesizes
-        thoughtful, cited guidance.
+      <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+        Ask about a verse, a teaching, or daily practice — answers are grounded
+        in the Gita and Yoga Sutras, with citations.
       </p>
-      <ul className="mt-6 flex flex-col gap-2 text-left text-sm text-muted-foreground sm:items-center">
-        {highlights.map((item) => (
-          <li key={item} className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 shrink-0 text-accent" aria-hidden />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-      {onSelectQuestion ? (
-        <p className="mt-8 text-xs text-muted-foreground">
-          Choose a suggested question below, or type your own.
-        </p>
-      ) : null}
     </div>
   );
 }

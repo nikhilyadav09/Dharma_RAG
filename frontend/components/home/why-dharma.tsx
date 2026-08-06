@@ -3,7 +3,6 @@
 import {
   BookOpen,
   Brain,
-  GitBranch,
   Layers,
   MessageCircle,
   Rocket,
@@ -50,11 +49,6 @@ const whyFeatures: {
     icon: Rocket,
     title: "Production ready",
     description: "Docker, typed APIs, expanded evaluation metrics, and a polished product UI.",
-  },
-  {
-    icon: GitBranch,
-    title: "Open source",
-    description: "Full codebase available for review, learning, and contribution.",
   },
 ];
 

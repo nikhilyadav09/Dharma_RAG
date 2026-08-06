@@ -86,14 +86,14 @@ export function SuggestedQuestions({
           Try asking
         </p>
       ) : null}
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-2">
         {visible.map((item) => (
           <button
             key={item.question}
             type="button"
             disabled={disabled}
             onClick={() => onSelect?.(item.question)}
-            className="group rounded-xl border border-border bg-card px-4 py-3.5 text-left transition-colors hover:border-accent/40 hover:bg-accent-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="group rounded-2xl border border-border bg-card px-3 py-3 text-left transition-colors hover:border-accent/40 hover:bg-accent-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-3.5"
             aria-label={`Suggested question: ${item.question}`}
           >
             <span className="flex items-center gap-2 text-xs font-medium text-accent">
