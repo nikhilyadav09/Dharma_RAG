@@ -312,11 +312,12 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
         <div
           className={cn(
             "flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8",
-            // No messages yet: bottom-align instead of top-aligning, so the
-            // welcome text sits right above the suggestions/input with no
-            // dead gap between them, instead of stranded at the top of a
-            // mostly-empty scroll area.
-            messages.length === 0 && !isLoading && "flex flex-col justify-end",
+            // No messages yet: center the welcome text so its position
+            // stays stable regardless of whether the suggestions grid below
+            // is expanded or collapsed, instead of drifting with the fixed
+            // bar's height (bottom-align would move it every time that
+            // height changes; top-align leaves it stranded near the top).
+            messages.length === 0 && !isLoading && "flex flex-col justify-center",
           )}
           style={{ paddingBottom: bottomBarHeight + 24 }}
         >
@@ -341,7 +342,14 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
       */}
       <div
         ref={bottomBarRef}
-        className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur-md"
+        className={cn(
+          "safe-bottom fixed inset-x-0 bottom-0 z-30 bg-background/95 backdrop-blur-md",
+          // Only show the top divider when there's real conversation
+          // content scrolling behind it -- the suggestions grid already has
+          // its own bordered box, so a second line above it here is just
+          // visual clutter on the welcome screen.
+          !showSuggestions && "border-t border-border",
+        )}
       >
         <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-4 sm:px-6">
           {showSuggestions ? (

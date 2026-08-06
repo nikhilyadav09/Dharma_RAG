@@ -5,7 +5,7 @@ import {
   Brain,
   Layers,
   MessageCircle,
-  Rocket,
+  ScrollText,
   Shield,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -23,32 +23,32 @@ const whyFeatures: {
   {
     icon: Shield,
     title: "Grounded responses",
-    description: "Answers synthesized only from retrieved scripture — with inline citations, not speculation.",
+    description: "Answers are built only from retrieved scripture — never speculation or the model's own opinion.",
   },
   {
     icon: BookOpen,
-    title: "Real citations",
-    description: "Primary and supporting teachings from Bhagavad Gita and Yoga Sutras with scripture badges.",
+    title: "Citations you can check",
+    description: "Every claim points to a specific chapter and verse, so you can go read it yourself.",
   },
   {
     icon: Brain,
-    title: "Advanced retrieval",
-    description: "BGE embeddings, BM25, cross-encoder reranking, and direct chapter/verse lookup.",
+    title: "Understands what you're asking",
+    description: "Ask in your own words — it finds the verse that actually answers your question, not just matching keywords.",
   },
   {
     icon: MessageCircle,
-    title: "AI teacher flow",
-    description: "Multi-turn memory and related follow-up questions guide deeper exploration.",
+    title: "Remembers the conversation",
+    description: "Ask a follow-up like “explain that more” and it knows what you're referring to.",
   },
   {
     icon: Layers,
-    title: "Intent-aware answers",
-    description: "Dynamic templates adapt to meaning, practice, comparison, and philosophical questions.",
+    title: "Answers shaped to your question",
+    description: "A definition, a comparison, daily guidance — the structure adapts to what you actually need.",
   },
   {
-    icon: Rocket,
-    title: "Production ready",
-    description: "Docker, typed APIs, expanded evaluation metrics, and a polished product UI.",
+    icon: ScrollText,
+    title: "Traditional commentary included",
+    description: "Go beyond the verse itself with classical commentary, whenever you want to go deeper.",
   },
 ];
 
@@ -58,25 +58,25 @@ export function WhyDharma() {
       <Container className="space-y-8">
         <SectionHeading
           title="Why DHARMA?"
-          description="Ancient wisdom explored through modern AI engineering — grounded, structured, and conversational."
+          description="Every answer traces back to an actual verse — nothing invented, nothing vague."
           className="mx-auto max-w-xl text-center"
         />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           {whyFeatures.map((feature) => (
             <Card
               key={feature.title}
               className="border-border/80 transition-colors hover:border-accent/25"
             >
-              <CardContent className="space-y-3 p-5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-muted">
-                  <feature.icon className="h-4 w-4 text-accent" aria-hidden />
+              <CardContent className="space-y-2.5 p-4 sm:p-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted">
+                    <feature.icon className="h-4 w-4 text-accent" aria-hidden />
+                  </div>
+                  <h3 className="text-sm font-semibold leading-snug">{feature.title}</h3>
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold">{feature.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {feature.description}
+                </p>
               </CardContent>
             </Card>
           ))}

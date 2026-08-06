@@ -107,7 +107,7 @@ export function SuggestedQuestions({
           >
             Try asking
             <ChevronDown
-              className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-180")}
+              className={cn("h-3.5 w-3.5 transition-transform duration-200", isOpen && "rotate-180")}
               aria-hidden
             />
           </button>
@@ -117,28 +117,40 @@ export function SuggestedQuestions({
           </p>
         )
       ) : null}
-      {isOpen ? (
-        <div className="grid grid-cols-2 gap-2 pt-3">
-          {visible.map((item) => (
-            <button
-              key={item.question}
-              type="button"
-              disabled={disabled}
-              onClick={() => onSelect?.(item.question)}
-              className="group rounded-2xl border border-border bg-card px-3 py-3 text-left transition-colors hover:border-accent/40 hover:bg-accent-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-3.5"
-              aria-label={`Suggested question: ${item.question}`}
-            >
-              <span className="flex items-center gap-2 text-xs font-medium text-accent">
-                <item.icon className="h-3.5 w-3.5" aria-hidden />
-                {item.title}
-              </span>
-              <span className="mt-1.5 block text-sm leading-snug text-foreground">
-                {item.question}
-              </span>
-            </button>
-          ))}
+
+      {/* grid-template-rows 0fr->1fr trick animates height smoothly without
+          needing to know the content's real height up front. */}
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows] duration-200 ease-out",
+          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="mt-3 rounded-2xl border border-border bg-card/40 p-2">
+            <div className="grid grid-cols-2 gap-2">
+              {visible.map((item) => (
+                <button
+                  key={item.question}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onSelect?.(item.question)}
+                  className="group rounded-xl px-3 py-3 text-left transition-colors hover:bg-accent-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-3.5"
+                  aria-label={`Suggested question: ${item.question}`}
+                >
+                  <span className="flex items-center gap-2 text-xs font-medium text-accent">
+                    <item.icon className="h-3.5 w-3.5" aria-hidden />
+                    {item.title}
+                  </span>
+                  <span className="mt-1.5 block text-sm leading-snug text-foreground">
+                    {item.question}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
