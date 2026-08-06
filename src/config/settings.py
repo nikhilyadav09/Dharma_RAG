@@ -18,9 +18,19 @@ class DatabaseConfig:
 
 class LLMConfig:
     """LLM configuration settings"""
-    API_KEY1 = os.getenv("LLM_API_KEY_1")
-    API_KEY2 = os.getenv("LLM_API_KEY_2")
-    API_KEY3 = os.getenv("LLM_API_KEY_3")
+    # Reads LLM_API_KEY_1, LLM_API_KEY_2, ... up to _MAX_KEY_SLOTS, so adding
+    # a 4th/5th/etc. key to .env just works without a code change. Blank
+    # slots are skipped, so keys don't need to be contiguous.
+    _MAX_KEY_SLOTS = 10
+    API_KEYS = [
+        key
+        for key in (os.getenv(f"LLM_API_KEY_{i}") for i in range(1, _MAX_KEY_SLOTS + 1))
+        if key
+    ]
+    # Kept for any external code that still references these directly.
+    API_KEY1 = API_KEYS[0] if len(API_KEYS) > 0 else None
+    API_KEY2 = API_KEYS[1] if len(API_KEYS) > 1 else None
+    API_KEY3 = API_KEYS[2] if len(API_KEYS) > 2 else None
     MODEL_NAME = os.getenv("LLM_MODEL_NAME", "llama-3.3-70b-versatile")
     MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", 900))
     TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", 0.5))

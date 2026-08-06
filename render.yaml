@@ -34,3 +34,11 @@ services:
         value: "5432"
       - key: LLM_API_KEY_1
         sync: false
+      - key: LLM_API_KEY_2
+        sync: false
+      - key: LLM_API_KEY_3
+        sync: false
+      - key: LLM_API_KEY_4
+        sync: false
+      - key: LLM_API_KEY_5
+        sync: false

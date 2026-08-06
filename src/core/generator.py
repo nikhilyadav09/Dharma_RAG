@@ -24,23 +24,21 @@ class WisdomResponseGenerator:
 
     def __init__(self):
         try:
-            self.api_keys = [
-                key for key in [LLMConfig.API_KEY1, LLMConfig.API_KEY2, LLMConfig.API_KEY3]
-                if key
-            ]
+            self.api_keys = LLMConfig.API_KEYS
             self.current_key_index = 0
-            self.client = self._get_client()
-            logger.info("WisdomResponseGenerator initialized successfully")
+            # One client per key, created once -- _generate_llm_response
+            # rotates across these on failure instead of ever being stuck
+            # on a single key for the process's whole lifetime.
+            self.clients = [AsyncGroq(api_key=key) for key in self.api_keys]
+            self.client = self.clients[0] if self.clients else None
+            logger.info(
+                "WisdomResponseGenerator initialized with %d API key(s)",
+                len(self.clients),
+            )
         except Exception as e:
             logger.error("Generator initialization failed: %s", e)
+            self.clients = []
             self.client = None
-
-    def _get_client(self):
-        if not self.api_keys:
-            return None
-        api_key = self.api_keys[self.current_key_index]
-        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-        return AsyncGroq(api_key=api_key)
 
     async def generate_answer(
         self,
@@ -114,25 +112,52 @@ class WisdomResponseGenerator:
         return "\n\n".join(citations)
 
     async def _generate_llm_response(self, prompt: str, max_tokens: int) -> str:
-        response = await self.client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are DHARMA, a wise teacher of ancient scripture. "
-                        "Synthesize teachings into clear concepts — never copy long passages. "
-                        "Always use Markdown. Include inline citations like (Bhagavad Gita 2.47)."
-                    ),
-                },
-                {"role": "user", "content": prompt},
-            ],
-            model=LLMConfig.MODEL_NAME,
-            max_tokens=max_tokens,
-            temperature=LLMConfig.TEMPERATURE,
-        )
-        text = response.choices[0].message.content.strip()
-        text = self._ensure_complete_sentences(text)
-        return self._postprocess_response(text)
+        if not self.clients:
+            raise RuntimeError("No Groq API key configured")
+
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are DHARMA, a wise teacher of ancient scripture. "
+                    "Synthesize teachings into clear concepts — never copy long passages. "
+                    "Always use Markdown. Include inline citations like (Bhagavad Gita 2.47)."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ]
+
+        # Sticky-with-failover: keep using whichever key last worked, and
+        # only rotate to the next one when a call actually fails (rate
+        # limit, revoked key, etc.) -- rather than round-robining every
+        # request for no reason. Tries every configured key before giving
+        # up, so one dead/exhausted key doesn't take the whole app down.
+        last_error: Optional[Exception] = None
+        for attempt in range(len(self.clients)):
+            index = (self.current_key_index + attempt) % len(self.clients)
+            client = self.clients[index]
+            try:
+                response = await client.chat.completions.create(
+                    messages=messages,
+                    model=LLMConfig.MODEL_NAME,
+                    max_tokens=max_tokens,
+                    temperature=LLMConfig.TEMPERATURE,
+                )
+                self.current_key_index = index
+                text = response.choices[0].message.content.strip()
+                text = self._ensure_complete_sentences(text)
+                return self._postprocess_response(text)
+            except Exception as e:
+                last_error = e
+                logger.warning(
+                    "Groq key #%d/%d failed (%s)%s",
+                    index + 1,
+                    len(self.clients),
+                    e,
+                    ", trying next key" if attempt + 1 < len(self.clients) else ", no keys left",
+                )
+
+        raise last_error
 
     async def _generate_greeting_response(
         self, query: str, intent: IntentResult
