@@ -91,12 +91,8 @@ export function SuggestedQuestions({
     );
   }
 
-  // Compact mode renders inside the fixed composer bar on the chat page --
-  // on short mobile viewports, a 2-row grid there can push the welcome
-  // text above it off screen before the user's even scrolled. One row
-  // keeps the bar short enough that everything fits by default.
   const visible = compact
-    ? DEFAULT_SUGGESTIONS.slice(0, 2)
+    ? DEFAULT_SUGGESTIONS.slice(0, 4)
     : DEFAULT_SUGGESTIONS;
 
   return (

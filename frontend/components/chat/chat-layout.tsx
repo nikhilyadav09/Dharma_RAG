@@ -9,6 +9,7 @@ import { SuggestedQuestions } from "@/components/chat/suggested-questions";
 import { PageContainer } from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
 import { ApiError, getApiClient } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import {
   createAssistantMessage,
   createErrorMessage,
@@ -309,7 +310,14 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
         </div>
 
         <div
-          className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8"
+          className={cn(
+            "flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8",
+            // No messages yet: bottom-align instead of top-aligning, so the
+            // welcome text sits right above the suggestions/input with no
+            // dead gap between them, instead of stranded at the top of a
+            // mostly-empty scroll area.
+            messages.length === 0 && !isLoading && "flex flex-col justify-end",
+          )}
           style={{ paddingBottom: bottomBarHeight + 24 }}
         >
           <ChatThread
