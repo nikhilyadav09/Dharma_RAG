@@ -290,7 +290,7 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
 
         <div
           className={cn(
-            "flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8",
+            "flex-1 overflow-y-auto px-4 py-6 pb-32 sm:px-6 sm:py-8 sm:pb-36",
             messages.length === 0 && !isLoading && "flex flex-col justify-center",
           )}
         >
@@ -304,25 +304,32 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
           />
           <div ref={messagesEndRef} aria-hidden />
         </div>
+      </div>
 
-        <div className="safe-bottom border-t border-border bg-background/95 px-4 py-4 backdrop-blur-md sm:px-6">
-          <div className="space-y-4">
-            {showSuggestions ? (
-              <SuggestedQuestions
-                onSelect={handleSuggestion}
-                disabled={isLoading}
-                compact
-              />
-            ) : null}
-            <ChatInputPlaceholder
-              ref={inputRef}
-              value={input}
-              onChange={setInput}
-              onSubmit={handleSubmit}
-              onStop={handleStop}
-              isLoading={isLoading}
+      {/*
+        Fixed to the real viewport rather than sitting as the last flex-col
+        child -- on mobile, the browser's own address bar hides/shows during
+        scroll and recalculates layout height, which would otherwise make
+        this bar visibly drift. Pinning it here keeps it put no matter what
+        the browser chrome does; only the conversation above scrolls.
+      */}
+      <div className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur-md">
+        <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-4 sm:px-6">
+          {showSuggestions ? (
+            <SuggestedQuestions
+              onSelect={handleSuggestion}
+              disabled={isLoading}
+              compact
             />
-          </div>
+          ) : null}
+          <ChatInputPlaceholder
+            ref={inputRef}
+            value={input}
+            onChange={setInput}
+            onSubmit={handleSubmit}
+            onStop={handleStop}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </PageContainer>
