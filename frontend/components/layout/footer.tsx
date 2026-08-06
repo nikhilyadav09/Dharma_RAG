@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Container } from "@/components/common/container";
 import { Separator } from "@/components/ui/separator";
+import { siteConfig } from "@/lib/site";
 
 const productLinks = [
   { href: "/chat", label: "Chat" },
@@ -34,9 +35,7 @@ export function Footer() {
               <span className="font-semibold tracking-tight">DHARMA</span>
             </div>
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Divine Healing And Reflective Mindfulness Assistant — a production-quality
-              RAG application for exploring Sanskrit wisdom with intent-aware answers,
-              inline citations, and multi-turn conversation.
+              {siteConfig.description}
             </p>
             <p className="text-xs leading-relaxed text-muted-foreground">
               Built with ❤️ by{" "}
