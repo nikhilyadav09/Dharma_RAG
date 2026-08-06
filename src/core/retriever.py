@@ -46,6 +46,24 @@ class VedicKnowledgeRetriever:
             logger.error("Database connection failed: %s", e)
             raise
 
+    def _execute_with_reconnect(self, sql: str, params: tuple):
+        """Run a query, transparently reconnecting once if the connection
+        was dropped server-side (e.g. Neon closing an idle connection).
+        `.closed` alone doesn't catch this -- it only reflects a locally
+        closed connection, not one the server severed while we still
+        think it's open, so the error only ever surfaces on actual use.
+        """
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(sql, params)
+                return cur.fetchall()
+        except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+            logger.warning("DB connection dropped (%s), reconnecting and retrying", e)
+            self.setup_database()
+            with self.conn.cursor() as cur:
+                cur.execute(sql, params)
+                return cur.fetchall()
+
     def setup_bm25(self):
         try:
             with self.conn.cursor() as cur:
@@ -119,24 +137,23 @@ class VedicKnowledgeRetriever:
         query_embedding = self._encode_query(query)
         vector_str = f"[{','.join(map(str, query_embedding))}]"
 
-        with self.conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, book, chapter, verse, sanskrit, translation, explanation,
-                       1 - (embedding <=> %s::vector) AS similarity
-                FROM verses
-                WHERE 1 - (embedding <=> %s::vector) > %s
-                ORDER BY similarity DESC
-                LIMIT %s
-                """,
-                (
-                    vector_str,
-                    vector_str,
-                    RAGConfig.SEMANTIC_THRESHOLD,
-                    top_k,
-                ),
-            )
-            return self._format_results(cur.fetchall(), include_similarity=True)
+        rows = self._execute_with_reconnect(
+            """
+            SELECT id, book, chapter, verse, sanskrit, translation, explanation,
+                   1 - (embedding <=> %s::vector) AS similarity
+            FROM verses
+            WHERE 1 - (embedding <=> %s::vector) > %s
+            ORDER BY similarity DESC
+            LIMIT %s
+            """,
+            (
+                vector_str,
+                vector_str,
+                RAGConfig.SEMANTIC_THRESHOLD,
+                top_k,
+            ),
+        )
+        return self._format_results(rows, include_similarity=True)
 
     def _bm25_search(self, query: str, top_k: int) -> List[Dict]:
         tokenized_query = word_tokenize(query.lower())

@@ -29,6 +29,25 @@ class MetadataRetriever:
         if self._owns_conn and self._conn and not self._conn.closed:
             self._conn.close()
 
+    def _execute(self, sql: str, params) -> list:
+        """Run a query, transparently reconnecting once if the connection
+        was dropped server-side (e.g. Neon closing an idle connection).
+        `.closed` in _get_conn() only reflects a locally closed connection,
+        not one the server severed while we still think it's open -- that
+        only surfaces as an error on actual use.
+        """
+        conn = self._get_conn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                return cur.fetchall()
+        except (psycopg2.OperationalError, psycopg2.InterfaceError):
+            self._conn = None
+            conn = self._get_conn()
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                return cur.fetchall()
+
     def lookup(self, query: str, preference: ScripturePreference = "any") -> List[Dict]:
         parsed = self._parse_reference(query, preference)
         if not parsed:
@@ -48,19 +67,16 @@ class MetadataRetriever:
             return []
 
         book = self.GITA_BOOK if preference == "bhagavad_gita" else self.YOGA_BOOK
-        conn = self._get_conn()
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, book, chapter, verse, sanskrit, translation, explanation
-                FROM verses
-                WHERE book = %s
-                ORDER BY chapter::int, verse
-                LIMIT %s
-                """,
-                (book, limit),
-            )
-            rows = cur.fetchall()
+        rows = self._execute(
+            """
+            SELECT id, book, chapter, verse, sanskrit, translation, explanation
+            FROM verses
+            WHERE book = %s
+            ORDER BY chapter::int, verse
+            LIMIT %s
+            """,
+            (book, limit),
+        )
 
         return [self._format_row(row, confidence=0.85) for row in rows]
 
@@ -113,7 +129,6 @@ class MetadataRetriever:
         chapter: Optional[int],
         verse: Optional[str],
     ) -> List[Dict]:
-        conn = self._get_conn()
         conditions = ["book = %s"]
         params: list = [book]
 
@@ -131,23 +146,19 @@ class MetadataRetriever:
             ORDER BY chapter, verse
             LIMIT 5
         """
-        with conn.cursor() as cur:
-            cur.execute(sql, params)
-            rows = cur.fetchall()
+        rows = self._execute(sql, params)
 
         if not rows and chapter is not None:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT id, book, chapter, verse, sanskrit, translation, explanation
-                    FROM verses
-                    WHERE book = %s AND chapter = %s
-                    ORDER BY verse
-                    LIMIT 5
-                    """,
-                    (book, chapter),
-                )
-                rows = cur.fetchall()
+            rows = self._execute(
+                """
+                SELECT id, book, chapter, verse, sanskrit, translation, explanation
+                FROM verses
+                WHERE book = %s AND chapter = %s
+                ORDER BY verse
+                LIMIT 5
+                """,
+                (book, chapter),
+            )
 
         return [self._format_row(row, confidence=0.99) for row in rows]
 
