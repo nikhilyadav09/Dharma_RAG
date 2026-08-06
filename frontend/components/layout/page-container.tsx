@@ -21,11 +21,16 @@ export function PageContainer({
   hideFooter = false,
 }: PageContainerProps) {
   return (
-    <div className="flex min-h-screen flex-col">
+    // flush layouts (chat) need a hard-capped viewport height, not a
+    // minimum -- with min-h-screen, any content/padding that pushes the
+    // total past 100vh grows the whole page instead of scrolling inside
+    // the intended inner region, which breaks a fixed-position footer's
+    // assumptions about what's actually on screen.
+    <div className={cn("flex flex-col", flush ? "h-dvh" : "min-h-screen")}>
       <Navbar />
       <main
         id="main-content"
-        className={cn("flex-1", !flush && "py-10 md:py-14", flush && className)}
+        className={cn("flex-1 min-h-0", !flush && "py-10 md:py-14", flush && className)}
       >
         {flush ? (
           children

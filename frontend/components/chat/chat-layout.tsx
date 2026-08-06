@@ -9,13 +9,14 @@ import { SuggestedQuestions } from "@/components/chat/suggested-questions";
 import { PageContainer } from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
 import { ApiError, getApiClient } from "@/lib/api";
-import { cn } from "@/lib/utils";
 import {
   createAssistantMessage,
   createErrorMessage,
   createUserMessage,
 } from "@/lib/chat-messages";
 import type { ChatMessage } from "@/types";
+
+const FALLBACK_BOTTOM_BAR_HEIGHT = 96;
 
 const SESSION_STORAGE_KEY = "dharma-chat-session-id";
 const MESSAGES_STORAGE_KEY = "dharma-chat-messages";
@@ -64,6 +65,25 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initialQuerySent = useRef(false);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const bottomBarRef = useRef<HTMLDivElement>(null);
+  const [bottomBarHeight, setBottomBarHeight] = useState(FALLBACK_BOTTOM_BAR_HEIGHT);
+
+  // The fixed bottom bar's height varies a lot -- just the composer during
+  // a conversation, much taller with the suggestions grid on the welcome
+  // screen, taller still if that grid is expanded or the textarea grows to
+  // multiple lines. Measure it directly rather than guessing a fixed
+  // padding, so the scroll area never ends up hidden behind it.
+  useEffect(() => {
+    const el = bottomBarRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0]?.borderBoxSize?.[0]?.blockSize ?? el.offsetHeight;
+      setBottomBarHeight(height);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     setSessionId(getStoredSessionId());
@@ -262,7 +282,7 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
 
   return (
     <PageContainer flush hideFooter className="flex flex-col">
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col">
+      <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col">
         <div className="flex items-start justify-between gap-4 border-b border-border/60 px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <h1 className="text-display text-xl font-semibold tracking-tight sm:text-2xl">
@@ -289,10 +309,8 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
         </div>
 
         <div
-          className={cn(
-            "flex-1 overflow-y-auto px-4 py-6 pb-32 sm:px-6 sm:py-8 sm:pb-36",
-            messages.length === 0 && !isLoading && "flex flex-col justify-center",
-          )}
+          className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8"
+          style={{ paddingBottom: bottomBarHeight + 24 }}
         >
           <ChatThread
             messages={messages}
@@ -313,13 +331,17 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
         this bar visibly drift. Pinning it here keeps it put no matter what
         the browser chrome does; only the conversation above scrolls.
       */}
-      <div className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur-md">
+      <div
+        ref={bottomBarRef}
+        className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur-md"
+      >
         <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-4 sm:px-6">
           {showSuggestions ? (
             <SuggestedQuestions
               onSelect={handleSuggestion}
               disabled={isLoading}
               compact
+              collapsible
             />
           ) : null}
           <ChatInputPlaceholder
