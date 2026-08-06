@@ -43,10 +43,14 @@ export function HomeStats({ className }: { className?: string }) {
       )}
     >
       Grounded in the Bhagavad Gita &amp; Yoga Sutras
-      <span className="mx-2 text-muted-foreground/40" aria-hidden>
-        ·
+      <span className="hidden sm:inline">
+        <span className="mx-2 text-muted-foreground/40" aria-hidden>
+          ·
+        </span>
       </span>
-      {stats.verses.toLocaleString()} verses across {stats.books} sacred texts
+      <span className="block sm:inline">
+        {stats.verses.toLocaleString()} verses across {stats.books} sacred texts
+      </span>
     </p>
   );
 }

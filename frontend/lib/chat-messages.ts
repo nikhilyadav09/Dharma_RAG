@@ -1,6 +1,20 @@
 import { ApiError, mapChatResponseToContent } from "@/lib/api";
 import type { ChatMessage, ChatResponse } from "@/types";
 
+// Defensive: the backend occasionally joins multiple related questions
+// onto a single string with " - " instead of returning separate array
+// items. Split those back apart so the UI never renders one giant
+// concatenated chip.
+function normalizeRelatedQuestions(list: string[] | undefined): string[] {
+  if (!list) return [];
+  return list.flatMap((item) =>
+    item
+      .split(/(?<=\?)\s*[-–—]\s*/)
+      .map((part) => part.trim())
+      .filter(Boolean),
+  );
+}
+
 export function createUserMessage(content: string): ChatMessage {
   return {
     id: crypto.randomUUID(),
@@ -19,7 +33,7 @@ export function createAssistantMessage(response: ChatResponse): ChatMessage {
     type: response.type,
     verse: response.primary_verse,
     sources: response.answer?.sources ?? [],
-    relatedQuestions: response.answer?.related_questions ?? [],
+    relatedQuestions: normalizeRelatedQuestions(response.answer?.related_questions),
     metadata: response.metadata,
     explanation: response.primary_verse?.explanation,
     status: "complete",

@@ -9,6 +9,7 @@ import { SuggestedQuestions } from "@/components/chat/suggested-questions";
 import { PageContainer } from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
 import { ApiError, getApiClient } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import {
   createAssistantMessage,
   createErrorMessage,
@@ -287,7 +288,12 @@ export function ChatLayout({ initialQuery }: { initialQuery?: string }) {
           ) : null}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8">
+        <div
+          className={cn(
+            "flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8",
+            messages.length === 0 && !isLoading && "flex flex-col justify-center",
+          )}
+        >
           <ChatThread
             messages={messages}
             isLoading={isLoading}

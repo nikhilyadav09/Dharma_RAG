@@ -182,10 +182,20 @@ class WisdomResponseGenerator:
         questions = []
         for line in tail.strip().splitlines():
             cleaned = re.sub(r"^[-*•\d.]+\s*", "", line).strip()
-            if cleaned.endswith("?"):
-                questions.append(cleaned)
-            elif cleaned and len(questions) < 3:
-                questions.append(cleaned.rstrip(".") + "?")
+            if not cleaned:
+                continue
+            # The model sometimes joins multiple questions onto a single
+            # line with " - " instead of one per line -- split those back
+            # out, or the whole line ends up rendered as one garbled
+            # "question" in the UI.
+            for part in re.split(r"(?<=\?)\s*[-–—]\s*", cleaned):
+                part = part.strip()
+                if not part or len(questions) >= 3:
+                    continue
+                if part.endswith("?"):
+                    questions.append(part)
+                else:
+                    questions.append(part.rstrip(".") + "?")
 
         return main.strip(), questions[:3]
 
